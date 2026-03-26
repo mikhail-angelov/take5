@@ -3,3 +3,5 @@ node_modules
 test*
 take5*
 .env
+*.mp3
+*.mp4
