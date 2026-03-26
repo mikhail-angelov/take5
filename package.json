@@ -1,0 +1,29 @@
+{
+  "name": "take5",
+  "version": "1.0.0",
+  "author": "Mikhail Angelov",
+  "repository": {
+    "url": "https://github.com/mikhail-angelov/take5"
+  },
+  "description": "AI agent that explores your web app and records a polished demo video",
+  "type": "module",
+  "bin": {
+    "take5": "./src/cli.js"
+  },
+  "files": [
+    "src/"
+  ],
+  "scripts": {
+    "start": "node --env-file=.env src/cli.js",
+    "dev": "node --env-file=.env src/cli.js --cut-delays -f test.md",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "fluent-ffmpeg": "^2.1.3",
+    "openai": "^4.47.1",
+    "playwright": "^1.44.0"
+  },
+  "engines": {
+    "node": ">=20.6.0"
+  }
+}
