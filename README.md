@@ -1,6 +1,18 @@
-# take5
+# @mikhail.angelov/take5
 
 Take5 is a local CLI that uses an LLM-driven browser agent to explore a web app and record a polished demo video.
+
+## Installation
+
+```bash
+npm install -g @mikhail.angelov/take5
+```
+
+Or install locally in your project:
+
+```bash
+npm install @mikhail.angelov/take5
+```
 
 You give it:
 
@@ -38,13 +50,25 @@ It opens a real Chromium browser, navigates the app, performs the flow, highligh
 
 ## Setup
 
+First, install Playwright Chromium:
+
 ```bash
-npm install
 npx playwright install chromium
+```
+
+Then create a `.env` file in your working directory with your API key:
+
+```bash
+echo "DEEPSEEK_API_KEY=sk-..." > .env
+```
+
+Or copy from the example:
+
+```bash
 cp .env.example .env
 ```
 
-Then set your API key in `.env`:
+Then edit `.env` to add your API key.
 
 ```bash
 DEEPSEEK_API_KEY=sk-...
@@ -52,7 +76,13 @@ DEEPSEEK_API_KEY=sk-...
 
 ## Run
 
-Interactive mode:
+If installed globally:
+
+```bash
+take5
+```
+
+If installed locally or developing:
 
 ```bash
 npm start
@@ -65,7 +95,7 @@ App URL: https://your-app.com
 Scenario: Show how a user creates a project and invites a teammate
 ```
 
-Scenario-file mode with delay cutting:
+Scenario-file mode with delay cutting (local development):
 
 ```bash
 npm run dev
