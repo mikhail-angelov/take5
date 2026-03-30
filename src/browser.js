@@ -99,6 +99,47 @@ export class Browser {
       {
         type: "function",
         function: {
+          name: "browser_drag",
+          description:
+            "Drag on an element by pressing the mouse, moving, and releasing. Use this for canvas drawing, sliders, and other pointer-drag interactions.",
+          parameters: {
+            type: "object",
+            properties: {
+              ref: {
+                type: "string",
+                description: "Element ref from snapshot (e.g. e42)",
+              },
+              selector: {
+                type: "string",
+                description: "CSS selector fallback if no ref",
+              },
+              startX: {
+                type: "number",
+                description:
+                  "Drag start X in pixels relative to the target element's top-left corner",
+              },
+              startY: {
+                type: "number",
+                description:
+                  "Drag start Y in pixels relative to the target element's top-left corner",
+              },
+              endX: {
+                type: "number",
+                description:
+                  "Drag end X in pixels relative to the target element's top-left corner",
+              },
+              endY: {
+                type: "number",
+                description:
+                  "Drag end Y in pixels relative to the target element's top-left corner",
+              },
+            },
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
           name: "browser_fill",
           description: "Type text into an input field.",
           parameters: {
@@ -296,6 +337,7 @@ export class Browser {
     // Track start of meaningful action
     const isMeaningfulAction = [
       "browser_click",
+      "browser_drag",
       "browser_fill",
       "browser_select",
       "browser_hover",
@@ -384,6 +426,33 @@ export class Browser {
           return `Clicked successfully`;
         } catch (e) {
           return `Click failed: ${e.message}`;
+        }
+      }
+
+      case "browser_drag": {
+        try {
+          await highlightDragTarget(p, args);
+          const targetRect = await getTargetBoundingBox(p, args);
+          if (!targetRect) {
+            throw new Error("Could not determine drag target bounds");
+          }
+
+          const {
+            startX,
+            startY,
+            endX,
+            endY,
+          } = resolveDragCoordinates(targetRect, args);
+
+          await p.mouse.move(startX, startY);
+          await p.mouse.down();
+          await p.mouse.move(endX, endY, { steps: 12 });
+          await p.mouse.up();
+          await clearAnnotation(p);
+          await p.waitForTimeout(100);
+          return `Dragged from (${Math.round(startX)}, ${Math.round(startY)}) to (${Math.round(endX)}, ${Math.round(endY)})`;
+        } catch (e) {
+          return `Drag failed: ${e.message}`;
         }
       }
 
@@ -697,12 +766,20 @@ function getLocatorByRef(page, ref) {
   const node = _refMap.get(ref);
   if (!node) throw new Error(`No element found for ref ${ref}`);
 
-  if (node.name) {
-    return page.getByRole(node.role, { name: node.name, exact: true }).first();
+  const normalizedRole = normalizeRole(node.role);
+
+  if (normalizedRole === "canvas") {
+    return page.locator("canvas").first();
   }
 
-  if (node.role && node.role !== "generic") {
-    return page.getByRole(node.role).first();
+  if (node.name) {
+    return page
+      .getByRole(normalizedRole, { name: node.name, exact: true })
+      .first();
+  }
+
+  if (normalizedRole && normalizedRole !== "generic") {
+    return page.getByRole(normalizedRole).first();
   }
 
   throw new Error(`Element ref ${ref} does not have enough metadata to locate it`);
@@ -739,8 +816,25 @@ async function resolveAnnotationTarget(page, args) {
   return { selector: args.selector || null };
 }
 
+async function getTargetBoundingBox(page, args) {
+  if (args.ref) {
+    return await getBoundingBoxByRef(page, args.ref);
+  }
+
+  if (args.selector) {
+    return await getBoundingBoxBySelector(page, args.selector);
+  }
+
+  throw new Error("need either ref or selector");
+}
+
 async function getBoundingBoxByRef(page, ref) {
   const locator = await getVisibleLocatorByRef(page, ref);
+  return await locator.boundingBox();
+}
+
+async function getBoundingBoxBySelector(page, selector) {
+  const locator = await getLocatorForSelector(page, selector);
   return await locator.boundingBox();
 }
 
@@ -749,6 +843,14 @@ async function highlightClickTarget(page, args) {
   if (!target.selector && !target.targetRect) return;
 
   await injectAnnotation(page, 'Clicking here', target);
+  await page.waitForTimeout(250);
+}
+
+async function highlightDragTarget(page, args) {
+  const target = await resolveAnnotationTarget(page, args);
+  if (!target.selector && !target.targetRect) return;
+
+  await injectAnnotation(page, "Dragging here", target);
   await page.waitForTimeout(250);
 }
 
@@ -786,7 +888,7 @@ function parseSnapshotForRefMap(snapshotString) {
 
     // Extract role (first word after bullet)
     const roleMatch = line.match(/^\s*-\s+(\w+)/);
-    const role = roleMatch ? roleMatch[1] : "generic";
+    const role = normalizeRole(roleMatch ? roleMatch[1] : "generic");
 
     // Extract name if present (text in quotes)
     const nameMatch = line.match(/"([^"]+)"/);
@@ -807,14 +909,49 @@ function parseSnapshotForRefMap(snapshotString) {
   }
 }
 
+function normalizeRole(role) {
+  return typeof role === "string" ? role.toLowerCase() : "generic";
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function resolveDragCoordinates(targetRect, args) {
+  const maxX = Math.max(1, targetRect.width - 1);
+  const maxY = Math.max(1, targetRect.height - 1);
+
+  const defaultStartX = Math.max(12, Math.round(targetRect.width * 0.2));
+  const defaultStartY = Math.max(12, Math.round(targetRect.height * 0.2));
+  const defaultEndX = Math.max(defaultStartX + 24, Math.round(targetRect.width * 0.7));
+  const defaultEndY = Math.max(defaultStartY + 24, Math.round(targetRect.height * 0.45));
+
+  const startOffsetX = clamp(Number(args.startX ?? defaultStartX), 1, maxX);
+  const startOffsetY = clamp(Number(args.startY ?? defaultStartY), 1, maxY);
+  const endOffsetX = clamp(Number(args.endX ?? defaultEndX), 1, maxX);
+  const endOffsetY = clamp(Number(args.endY ?? defaultEndY), 1, maxY);
+
+  return {
+    startX: targetRect.x + startOffsetX,
+    startY: targetRect.y + startOffsetY,
+    endX: targetRect.x + endOffsetX,
+    endY: targetRect.y + endOffsetY,
+  };
+}
+
 export const __testables = {
+  clamp,
   extractRefFromSelector,
   getLocatorByRef,
   getLocatorForSelector,
+  getTargetBoundingBox,
   getVisibleLocatorByRef,
+  highlightDragTarget,
   isContentEditableNode,
   parseSnapshotForRefMap,
   highlightClickTarget,
+  normalizeRole,
   ensureLocatorVisible,
+  resolveDragCoordinates,
   resolveAnnotationTarget,
 };

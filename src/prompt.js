@@ -18,6 +18,8 @@ Your job is to explore a live web application using browser tools, then execute 
 - If something unexpected appears (login wall, error, modal), adapt and handle it
 - Call inject_annotation BEFORE the action it describes, not after
 - Call clear_annotation BEFORE next action starts
+- Use browser_drag for canvas drawing or any interaction that requires mouse down, move, and mouse up
+- If the target is a canvas or drawing surface, you may use the snapshot ref or the selector \`canvas\`
 - **CRITICAL: Minimize browser_wait usage** - Only use browser_wait if absolutely necessary (e.g., waiting for an animation to complete). If you must wait, use minimal time (e.g., 100-500ms, not 2000-3000ms).
 - **NO LONG WAITS**: Do not use browser_wait(ms="2000") or browser_wait(ms="3000") - these create unnecessary delays in the demo.
 

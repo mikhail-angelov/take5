@@ -236,3 +236,99 @@ test('browser_click scrolls selector targets into view before clicking', async (
     ['waitForTimeout', 20],
   ]);
 });
+
+test('parseSnapshotForRefMap normalizes canvas refs and resolves them via canvas locator', async () => {
+  __testables.parseSnapshotForRefMap('- Canvas [ref=e14]');
+
+  const calls = [];
+  const locator = createFakeLocator(calls, 'canvas');
+  const page = {
+    locator(selector) {
+      calls.push(['locator', selector]);
+      return {
+        first() {
+          return locator;
+        },
+      };
+    },
+    getByRole() {
+      throw new Error('getByRole should not be used for canvas refs');
+    },
+  };
+
+  const resolved = __testables.getLocatorByRef(page, 'e14');
+  assert.equal(resolved, locator);
+  assert.deepEqual(calls, [['locator', 'canvas']]);
+});
+
+test('browser_drag performs mouse down move up against selector targets', async () => {
+  const calls = [];
+  const browser = new Browser();
+  browser.page = {
+    async evaluate(fn, payload) {
+      calls.push(['evaluate', payload]);
+    },
+    async waitForSelector(selector, options) {
+      calls.push(['waitForSelector', selector, options]);
+    },
+    locator(selector) {
+      return {
+        label: selector,
+        first() {
+          return this;
+        },
+        async scrollIntoViewIfNeeded() {
+          calls.push(['scrollIntoViewIfNeeded', selector]);
+        },
+        async boundingBox() {
+          calls.push(['boundingBox', selector]);
+          return { x: 100, y: 50, width: 400, height: 300 };
+        },
+      };
+    },
+    mouse: {
+      async move(x, y, options) {
+        calls.push(['mouse.move', x, y, options ?? null]);
+      },
+      async down() {
+        calls.push(['mouse.down']);
+      },
+      async up() {
+        calls.push(['mouse.up']);
+      },
+    },
+    async waitForTimeout(ms) {
+      calls.push(['waitForTimeout', ms]);
+    },
+  };
+
+  const result = await browser.executeTool('browser_drag', {
+    selector: 'canvas',
+    startX: 80,
+    startY: 60,
+    endX: 240,
+    endY: 180,
+  });
+
+  assert.equal(result, 'Dragged from (180, 110) to (340, 230)');
+  assert.deepEqual(calls, [
+    [
+      'evaluate',
+      {
+        description: 'Dragging here',
+        selector: 'canvas',
+        targetRect: null,
+      },
+    ],
+    ['waitForTimeout', 250],
+    ['waitForSelector', 'canvas', { timeout: 6000 }],
+    ['scrollIntoViewIfNeeded', 'canvas'],
+    ['boundingBox', 'canvas'],
+    ['mouse.move', 180, 110, null],
+    ['mouse.down'],
+    ['mouse.move', 340, 230, { steps: 12 }],
+    ['mouse.up'],
+    ['evaluate', undefined],
+    ['waitForTimeout', 100],
+  ]);
+});
