@@ -4,10 +4,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const cliPath = path.resolve(scriptDir, '../src/cli.js');
+const repoRoot = path.resolve(scriptDir, '..');
+const cliPath = path.resolve(repoRoot, 'src/cli.js');
+const captureFile = path.resolve(repoRoot, 'fixtures/sample-capture.json');
+const outDir = path.resolve(repoRoot, 'take5-output-smoke');
 
-const result = spawnSync(process.execPath, [cliPath, 'run', 'fixtures/sample-capture.json', '--out', './take5-output-smoke'], {
+const result = spawnSync(process.execPath, [cliPath, 'run', captureFile, '--out', outDir], {
   encoding: 'utf8',
+  cwd: repoRoot,
 });
 
 if (result.stdout) {

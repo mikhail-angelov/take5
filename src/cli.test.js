@@ -33,14 +33,33 @@ test('parseCliArgs rejects malformed --out', () => {
 });
 
 test('cli smoke path fails for missing capture file', async () => {
-  const cliPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'cli.js');
-  const missingCapture = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'does-not-exist.json');
-  await fs.rm(path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'take5-output'), { recursive: true, force: true });
+  const testDir = path.dirname(fileURLToPath(import.meta.url));
+  const cliPath = path.resolve(testDir, 'cli.js');
+  const missingCapture = path.resolve(testDir, 'does-not-exist.json');
+  await fs.rm(path.resolve(testDir, 'take5-output'), { recursive: true, force: true });
 
   const result = spawnSync(process.execPath, [cliPath, 'run', missingCapture], {
     encoding: 'utf8',
   });
 
   assert.notEqual(result.status, 0);
-  assert.match((result.stderr || result.stdout), /ENOENT/);
+  assert.match((result.stderr || result.stdout), /Capture file is not readable:/);
+});
+
+test('cli run path creates output and forwards debug logging', async () => {
+  const testDir = path.dirname(fileURLToPath(import.meta.url));
+  const cliPath = path.resolve(testDir, 'cli.js');
+  const captureFile = path.resolve(testDir, '..', 'fixtures', 'sample-capture.json');
+  const outDir = path.resolve(testDir, '..', 'take5-output-test');
+
+  await fs.rm(outDir, { recursive: true, force: true });
+
+  const result = spawnSync(process.execPath, [cliPath, 'run', captureFile, '--out', outDir, '--debug'], {
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 0);
+  await assert.doesNotReject(fs.stat(outDir));
+  assert.match(result.stdout, /Debug logging enabled/);
+  assert.match(result.stdout, /cutDelays: false/);
 });

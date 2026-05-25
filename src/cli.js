@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { realpathSync } from 'node:fs';
 import { runCommand } from './commands/run.js';
-import { CliUsageError } from './errors.js';
+import { CliOperationError, CliUsageError } from './errors.js';
 
 export function parseCliArgs(argv = []) {
   const [command = 'run', ...rest] = argv;
@@ -74,7 +74,7 @@ if (argvPath && argvPath === cliPath) {
   try {
     await main();
   } catch (error) {
-    if (error instanceof CliUsageError) {
+    if (error instanceof CliUsageError || error instanceof CliOperationError) {
       console.error(error.message);
       process.exitCode = 1;
     } else {
