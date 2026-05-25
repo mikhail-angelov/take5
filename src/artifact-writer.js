@@ -11,7 +11,8 @@ function slugify(value) {
 
 export async function createRunDirectory(outDir, scenarioId) {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const runDir = path.join(outDir, `${stamp}-${slugify(scenarioId)}`);
+  const runDirPrefix = path.join(outDir, `${stamp}-${slugify(scenarioId)}-`);
+  const runDir = await fs.mkdtemp(runDirPrefix);
   const screenshotsDir = path.join(runDir, 'screenshots');
 
   await fs.mkdir(screenshotsDir, { recursive: true });
