@@ -39,7 +39,11 @@ export async function runCommand({ captureFile, outDir, debug, cutDelays }) {
   await validateCaptureFile(captureFile);
   await validateOutDir(outDir);
 
-  await fs.mkdir(outDir, { recursive: true });
+  try {
+    await fs.mkdir(outDir, { recursive: true });
+  } catch {
+    throw new CliOperationError(`Unable to create output directory: ${outDir}`);
+  }
 
   const logger = createLogger({ debug });
   logger.debug('Debug logging enabled');

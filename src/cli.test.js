@@ -71,6 +71,31 @@ test('cli run path rejects out target that already exists as a file', async () =
   assert.match(result.stderr || result.stdout, /Output path must be a directory:/);
 });
 
+test('cli run path rejects output directories under a file parent', async () => {
+  const testDir = path.dirname(fileURLToPath(import.meta.url));
+  const cliPath = path.resolve(testDir, 'cli.js');
+  const captureFile = path.resolve(testDir, '..', 'fixtures', 'sample-capture.json');
+  const parentDir = path.resolve(testDir, '..', 'take5-output-unwritable');
+  const outTarget = path.resolve(parentDir, 'nested-output');
+
+  await fs.rm(parentDir, { recursive: true, force: true });
+  await fs.mkdir(parentDir, { recursive: true });
+  await fs.chmod(parentDir, 0o555);
+
+  try {
+    const result = spawnSync(process.execPath, [cliPath, 'run', captureFile, '--out', outTarget], {
+      encoding: 'utf8',
+    });
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr || result.stdout, /Unable to create output directory:/);
+    assert.doesNotMatch(result.stderr || result.stdout, /at async|node:internal/);
+  } finally {
+    await fs.chmod(parentDir, 0o755);
+    await fs.rm(parentDir, { recursive: true, force: true });
+  }
+});
+
 test('cli run path rejects capture directories', async () => {
   const testDir = path.dirname(fileURLToPath(import.meta.url));
   const cliPath = path.resolve(testDir, 'cli.js');
