@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { loadCaptureBundle } from './capture-loader.js';
 
@@ -24,26 +26,35 @@ test('loadCaptureBundle reads and validates the sample capture fixture', async (
 });
 
 test('loadCaptureBundle rejects invalid JSON payloads through validation', async () => {
-  const testDir = path.dirname(fileURLToPath(import.meta.url));
-  const capturePath = path.resolve(testDir, '..', 'take5-output-invalid-capture.json');
+  const captureDir = await fs.mkdtemp(path.join(os.tmpdir(), 'take5-capture-'));
+  const capturePath = path.join(captureDir, `invalid-${randomUUID()}.json`);
 
-  await fs.writeFile(
-    capturePath,
-    JSON.stringify({
-      metadata: {
-        schemaVersion: 1,
-        scenarioId: 'invalid-capture',
-      },
-      steps: [{ type: 'drag_and_pray' }],
-      annotations: [],
-      debug: {},
-    }),
-  );
+  await fs.writeFile(capturePath, JSON.stringify({
+    metadata: {
+      schemaVersion: 1,
+      scenarioId: 'invalid-capture',
+    },
+    steps: [{ type: 'drag_and_pray' }],
+    annotations: [],
+    debug: {},
+  }));
 
   try {
     await assert.rejects(loadCaptureBundle(capturePath), /Unsupported step type: drag_and_pray/);
   } finally {
-    await fs.unlink(capturePath);
+    await fs.rm(captureDir, { recursive: true, force: true });
   }
 });
 
+test('loadCaptureBundle rejects malformed JSON', async () => {
+  const captureDir = await fs.mkdtemp(path.join(os.tmpdir(), 'take5-capture-'));
+  const capturePath = path.join(captureDir, `malformed-${randomUUID()}.json`);
+
+  await fs.writeFile(capturePath, '{"metadata":');
+
+  try {
+    await assert.rejects(loadCaptureBundle(capturePath), SyntaxError);
+  } finally {
+    await fs.rm(captureDir, { recursive: true, force: true });
+  }
+});
