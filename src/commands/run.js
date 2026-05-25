@@ -6,6 +6,15 @@ import { loadCaptureBundle } from '../capture-loader.js';
 import { createReplayPlan } from '../plan-generator.js';
 import { writeRunArtifacts } from '../artifact-writer.js';
 
+function asCliOperationError(prefix, error) {
+  if (error instanceof CliOperationError) {
+    return error;
+  }
+
+  const detail = error instanceof Error && typeof error.message === 'string' ? error.message : String(error);
+  return new CliOperationError(`${prefix}: ${detail}`);
+}
+
 async function validateCaptureFile(captureFile) {
   try {
     const stats = await fs.stat(captureFile);
@@ -56,13 +65,30 @@ export async function runCommand({ captureFile, outDir, debug, cutDelays }) {
   logger.info(`debug: ${debug}`);
   logger.info(`cutDelays: ${cutDelays}`);
 
-  const capture = await loadCaptureBundle(captureFile);
-  const plan = createReplayPlan(capture);
-  const { runDir } = await writeRunArtifacts({
-    outDir,
-    capture,
-    plan,
-  });
+  let capture;
+  try {
+    capture = await loadCaptureBundle(captureFile);
+  } catch (error) {
+    throw asCliOperationError(`Failed to load capture bundle ${captureFile}`, error);
+  }
+
+  let plan;
+  try {
+    plan = createReplayPlan(capture);
+  } catch (error) {
+    throw asCliOperationError(`Failed to normalize replay plan for ${captureFile}`, error);
+  }
+
+  let runDir;
+  try {
+    ({ runDir } = await writeRunArtifacts({
+      outDir,
+      capture,
+      plan,
+    }));
+  } catch (error) {
+    throw asCliOperationError(`Failed to write artifacts to ${outDir}`, error);
+  }
 
   logger.info(`run: ${runDir}`);
 }

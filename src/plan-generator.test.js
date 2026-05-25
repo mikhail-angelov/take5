@@ -18,19 +18,22 @@ test('createReplayPlan normalizes a capture bundle into the sample replay plan',
   assert.deepEqual(plan, expectedPlan);
 });
 
-test('createReplayPlan attaches annotations to their matching steps', () => {
+test('createReplayPlan preserves linked and unlinked annotations in stable places', () => {
   const plan = createReplayPlan({
     metadata: {
       schemaVersion: 1,
       scenarioId: 'annotated-scenario',
       baseUrl: 'https://example.com',
+      viewportPreset: '',
     },
     steps: [
       {
+        id: 'dup',
         type: 'navigate',
         url: 'https://example.com',
       },
       {
+        id: 'dup',
         type: 'click',
         selector: '#launch',
       },
@@ -39,12 +42,16 @@ test('createReplayPlan attaches annotations to their matching steps', () => {
       {
         description: 'Open the flow',
         selector: '#launch',
-        nearestStepId: 'step-2',
+        nearestStepId: 'dup',
       },
       {
         description: 'Start here',
         selector: 'body',
         stepIndex: 0,
+      },
+      {
+        description: 'Needs review',
+        selector: '#orphan',
       },
     ],
     debug: {},
@@ -55,6 +62,18 @@ test('createReplayPlan attaches annotations to their matching steps', () => {
     scenarioId: 'annotated-scenario',
     baseUrl: 'https://example.com',
     viewportPreset: 'desktop-1280',
+    annotations: [
+      {
+        description: 'Open the flow',
+        orderIndex: 0,
+        selector: '#launch',
+      },
+      {
+        description: 'Needs review',
+        orderIndex: 2,
+        selector: '#orphan',
+      },
+    ],
     steps: [
       {
         id: 'step-1',
@@ -63,8 +82,8 @@ test('createReplayPlan attaches annotations to their matching steps', () => {
         annotations: [
           {
             description: 'Start here',
+            orderIndex: 1,
             selector: 'body',
-            stepIndex: 0,
           },
         ],
       },
@@ -72,13 +91,7 @@ test('createReplayPlan attaches annotations to their matching steps', () => {
         id: 'step-2',
         type: 'click',
         selector: '#launch',
-        annotations: [
-          {
-            description: 'Open the flow',
-            selector: '#launch',
-            nearestStepId: 'step-2',
-          },
-        ],
+        annotations: [],
       },
     ],
   });

@@ -1,74 +1,177 @@
 const DEFAULT_VIEWPORT_PRESET = 'desktop-1280';
 
-function cloneAnnotation(annotation) {
-  return { ...annotation };
+function isNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
-function getStepId(step, index) {
-  if (typeof step.id === 'string' && step.id.trim()) {
-    return step.id;
-  }
-
-  return `step-${index + 1}`;
+function normalizeStringField(value) {
+  return isNonEmptyString(value) ? value : undefined;
 }
 
-function getAnnotationStepRef(annotation) {
-  if (typeof annotation.nearestStepId === 'string' && annotation.nearestStepId.trim()) {
-    return annotation.nearestStepId;
+function normalizeTargetRect(targetRect) {
+  if (!targetRect || typeof targetRect !== 'object' || Array.isArray(targetRect)) {
+    return undefined;
   }
 
-  if (typeof annotation.stepId === 'string' && annotation.stepId.trim()) {
-    return annotation.stepId;
+  const { x, y, width, height } = targetRect;
+  if ([x, y, width, height].some((value) => typeof value !== 'number' || !Number.isFinite(value))) {
+    return undefined;
   }
 
+  return { x, y, width, height };
+}
+
+function normalizeReplayAnnotation(annotation, orderIndex) {
+  const normalized = {
+    description: annotation.description,
+    orderIndex,
+  };
+
+  const selector = normalizeStringField(annotation.selector);
+  if (selector) {
+    normalized.selector = selector;
+  }
+
+  const pageUrl = normalizeStringField(annotation.pageUrl);
+  if (pageUrl) {
+    normalized.pageUrl = pageUrl;
+  }
+
+  const targetRect = normalizeTargetRect(annotation.targetRect);
+  if (targetRect) {
+    normalized.targetRect = targetRect;
+  }
+
+  return normalized;
+}
+
+function normalizeReplayStep(step, index) {
+  const normalized = {
+    id: `step-${index + 1}`,
+    type: step.type,
+  };
+
+  switch (step.type) {
+    case 'navigate':
+      normalized.url = step.url;
+      break;
+    case 'click':
+      if (normalizeStringField(step.ref)) {
+        normalized.ref = step.ref;
+      }
+      if (normalizeStringField(step.selector)) {
+        normalized.selector = step.selector;
+      }
+      break;
+    case 'fill':
+    case 'select':
+      if (normalizeStringField(step.ref)) {
+        normalized.ref = step.ref;
+      }
+      if (normalizeStringField(step.selector)) {
+        normalized.selector = step.selector;
+      }
+      normalized.value = step.value;
+      break;
+    case 'keypress':
+      normalized.key = step.key;
+      break;
+    case 'scroll':
+      normalized.direction = step.direction;
+      normalized.amount = step.amount;
+      break;
+    case 'wait':
+      normalized.ms = step.ms;
+      break;
+    case 'assert_text':
+      if (normalizeStringField(step.ref)) {
+        normalized.ref = step.ref;
+      }
+      if (normalizeStringField(step.selector)) {
+        normalized.selector = step.selector;
+      }
+      normalized.text = step.text;
+      break;
+    default:
+      break;
+  }
+
+  return normalized;
+}
+
+function getStepRef(annotation) {
   if (Number.isInteger(annotation.stepIndex) && annotation.stepIndex >= 0) {
-    return annotation.stepIndex;
+    return { kind: 'index', value: annotation.stepIndex };
+  }
+
+  const nearestStepId = normalizeStringField(annotation.nearestStepId);
+  if (nearestStepId) {
+    return { kind: 'id', value: nearestStepId };
+  }
+
+  const stepId = normalizeStringField(annotation.stepId);
+  if (stepId) {
+    return { kind: 'id', value: stepId };
   }
 
   return null;
 }
 
-export function createReplayPlan(bundle) {
-  const steps = bundle.steps.map((step, index) => ({
-    ...step,
-    id: getStepId(step, index),
-  }));
-
-  const stepsById = new Map(steps.map((step, index) => [step.id, { step, index }]));
-
+function countSourceStepIds(steps) {
+  const counts = new Map();
   for (const step of steps) {
-    step.annotations = [];
-  }
-
-  for (const annotation of bundle.annotations) {
-    const stepRef = getAnnotationStepRef(annotation);
-    const stepEntry =
-      typeof stepRef === 'number'
-        ? steps[stepRef] && { step: steps[stepRef], index: stepRef }
-        : stepsById.get(stepRef);
-
-    if (!stepEntry) {
+    const sourceId = normalizeStringField(step.id);
+    if (!sourceId) {
       continue;
     }
-
-    stepEntry.step.annotations.push(cloneAnnotation(annotation));
+    counts.set(sourceId, (counts.get(sourceId) || 0) + 1);
   }
+  return counts;
+}
+
+export function createReplayPlan(bundle) {
+  const sourceStepIdCounts = countSourceStepIds(bundle.steps);
+  const sourceStepIdToReplayStepId = new Map();
+  const steps = bundle.steps.map((step, index) => normalizeReplayStep(step, index));
+  const annotations = [];
+
+  for (let index = 0; index < bundle.steps.length; index += 1) {
+    const sourceId = normalizeStringField(bundle.steps[index].id);
+    if (sourceId && sourceStepIdCounts.get(sourceId) === 1) {
+      sourceStepIdToReplayStepId.set(sourceId, steps[index].id);
+    }
+    steps[index].annotations = [];
+  }
+
+  bundle.annotations.forEach((annotation, orderIndex) => {
+    const normalizedAnnotation = normalizeReplayAnnotation(annotation, orderIndex);
+    const stepRef = getStepRef(annotation);
+    let linkedStep = null;
+
+    if (stepRef?.kind === 'index' && steps[stepRef.value]) {
+      linkedStep = steps[stepRef.value];
+    } else if (stepRef?.kind === 'id') {
+      const replayStepId = sourceStepIdToReplayStepId.get(stepRef.value);
+      if (replayStepId) {
+        linkedStep = steps.find((step) => step.id === replayStepId) || null;
+      }
+    }
+
+    if (linkedStep) {
+      linkedStep.annotations.push(normalizedAnnotation);
+      return;
+    }
+
+    annotations.push(normalizedAnnotation);
+  });
 
   return {
     version: bundle.metadata.schemaVersion,
     scenarioId: bundle.metadata.scenarioId,
-    baseUrl: typeof bundle.metadata.baseUrl === 'string' && bundle.metadata.baseUrl.trim() ? bundle.metadata.baseUrl : null,
+    baseUrl: normalizeStringField(bundle.metadata.baseUrl) || null,
     viewportPreset:
-      typeof bundle.metadata.viewportPreset === 'string' && bundle.metadata.viewportPreset.trim()
-        ? bundle.metadata.viewportPreset
-        : DEFAULT_VIEWPORT_PRESET,
-    steps: steps.map((step) => {
-      if (step.annotations.length === 0) {
-        const { annotations, ...rest } = step;
-        return rest;
-      }
-
-      return step;
-    }),
+      normalizeStringField(bundle.metadata.viewportPreset) || DEFAULT_VIEWPORT_PRESET,
+    annotations,
+    steps,
   };
 }

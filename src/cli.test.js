@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { parseCliArgs } from './cli.js';
 import { CliUsageError } from './errors.js';
@@ -57,6 +59,30 @@ test('cli smoke path fails for missing capture file', async () => {
   assert.match((result.stderr || result.stdout), /Capture file is not readable:/);
 });
 
+test('cli run path wraps malformed capture errors without raw stacks', async () => {
+  const testDir = path.dirname(fileURLToPath(import.meta.url));
+  const cliPath = path.resolve(testDir, 'cli.js');
+  const captureDir = await fs.mkdtemp(path.join(os.tmpdir(), 'take5-malformed-capture-'));
+  const captureFile = path.join(captureDir, `capture-${randomUUID()}.json`);
+  const outDir = path.resolve(testDir, '..', 'take5-output-malformed-capture');
+
+  await fs.writeFile(captureFile, '{"metadata":');
+  await fs.rm(outDir, { recursive: true, force: true });
+
+  try {
+    const result = spawnSync(process.execPath, [cliPath, 'run', captureFile, '--out', outDir], {
+      encoding: 'utf8',
+    });
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr || result.stdout, /Failed to load capture bundle .*: /);
+    assert.doesNotMatch(result.stderr || result.stdout, /at async|node:internal/);
+  } finally {
+    await fs.rm(captureDir, { recursive: true, force: true });
+    await fs.rm(outDir, { recursive: true, force: true });
+  }
+});
+
 test('cli run path rejects out target that already exists as a file', async () => {
   const testDir = path.dirname(fileURLToPath(import.meta.url));
   const cliPath = path.resolve(testDir, 'cli.js');
@@ -93,6 +119,30 @@ test('cli run path rejects output directories under a file parent', async () => 
   } finally {
     await fs.chmod(parentDir, 0o755);
     await fs.rm(parentDir, { recursive: true, force: true });
+  }
+});
+
+test('cli run path wraps artifact write failures without raw stacks', async () => {
+  const testDir = path.dirname(fileURLToPath(import.meta.url));
+  const cliPath = path.resolve(testDir, 'cli.js');
+  const captureFile = path.resolve(testDir, '..', 'fixtures', 'sample-capture.json');
+  const outDir = path.resolve(testDir, '..', 'take5-output-artifact-write-failure');
+
+  await fs.rm(outDir, { recursive: true, force: true });
+  await fs.mkdir(outDir, { recursive: true });
+  await fs.chmod(outDir, 0o555);
+
+  try {
+    const result = spawnSync(process.execPath, [cliPath, 'run', captureFile, '--out', outDir], {
+      encoding: 'utf8',
+    });
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr || result.stdout, /Failed to write artifacts to .*: /);
+    assert.doesNotMatch(result.stderr || result.stdout, /at async|node:internal/);
+  } finally {
+    await fs.chmod(outDir, 0o755);
+    await fs.rm(outDir, { recursive: true, force: true });
   }
 });
 
