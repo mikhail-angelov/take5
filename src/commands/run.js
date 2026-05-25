@@ -2,6 +2,9 @@ import fs from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
 import { createLogger } from '../logger.js';
 import { CliOperationError } from '../errors.js';
+import { loadCaptureBundle } from '../capture-loader.js';
+import { createReplayPlan } from '../plan-generator.js';
+import { writeRunArtifacts } from '../artifact-writer.js';
 
 async function validateCaptureFile(captureFile) {
   try {
@@ -52,4 +55,14 @@ export async function runCommand({ captureFile, outDir, debug, cutDelays }) {
   logger.info(`out: ${outDir}`);
   logger.info(`debug: ${debug}`);
   logger.info(`cutDelays: ${cutDelays}`);
+
+  const capture = await loadCaptureBundle(captureFile);
+  const plan = createReplayPlan(capture);
+  const { runDir } = await writeRunArtifacts({
+    outDir,
+    capture,
+    plan,
+  });
+
+  logger.info(`run: ${runDir}`);
 }
