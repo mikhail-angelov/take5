@@ -1,8 +1,7 @@
 {
   "metadata": {
     "schemaVersion": 1,
-    "name": "Sample capture",
-    "baseUrl": "https://example.com"
+    "scenarioId": "sample-scenario"
   },
   "steps": [
     {
