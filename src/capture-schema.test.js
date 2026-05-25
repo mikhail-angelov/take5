@@ -149,7 +149,34 @@ test('validateCaptureBundle validates per-step requirements', () => {
         ...validBundle,
         steps: [{ type: 'scroll', direction: 'down' }],
       }),
-    /scroll step requires direction and amount/,
+    /scroll step requires direction up\/down and a positive amount/,
+  );
+
+  assert.throws(
+    () =>
+      validateCaptureBundle({
+        ...validBundle,
+        steps: [{ type: 'scroll', direction: 'left', amount: 100 }],
+      }),
+    /scroll step requires direction up\/down and a positive amount/,
+  );
+
+  assert.throws(
+    () =>
+      validateCaptureBundle({
+        ...validBundle,
+        steps: [{ type: 'scroll', direction: 'down', amount: 0 }],
+      }),
+    /scroll step requires direction up\/down and a positive amount/,
+  );
+
+  assert.throws(
+    () =>
+      validateCaptureBundle({
+        ...validBundle,
+        steps: [{ type: 'scroll', direction: 'up', amount: -50 }],
+      }),
+    /scroll step requires direction up\/down and a positive amount/,
   );
 
   assert.throws(

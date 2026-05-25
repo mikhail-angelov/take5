@@ -9,6 +9,8 @@ const SUPPORTED_STEP_TYPES = new Set([
   'assert_text',
 ]);
 
+const SUPPORTED_SCROLL_DIRECTIONS = new Set(['up', 'down']);
+
 function isPlainObject(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -65,8 +67,8 @@ function validateStep(step) {
       }
       break;
     case 'scroll':
-      if (!isNonEmptyString(step.direction) || !isFiniteNumber(step.amount)) {
-        throw new Error('scroll step requires direction and amount');
+      if (!SUPPORTED_SCROLL_DIRECTIONS.has(step.direction) || !isFiniteNumber(step.amount) || step.amount <= 0) {
+        throw new Error('scroll step requires direction up/down and a positive amount');
       }
       break;
     case 'wait':
