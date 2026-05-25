@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { realpathSync } from 'node:fs';
 import { runCommand } from './commands/run.js';
 import { CliUsageError } from './errors.js';
 
@@ -67,8 +68,9 @@ export async function main(argv = process.argv.slice(2)) {
   });
 }
 
-const cliPath = fileURLToPath(import.meta.url);
-if (process.argv[1] === cliPath) {
+const cliPath = realpathSync(fileURLToPath(import.meta.url));
+const argvPath = process.argv[1] ? realpathSync(process.argv[1]) : null;
+if (argvPath && argvPath === cliPath) {
   try {
     await main();
   } catch (error) {

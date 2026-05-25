@@ -1,9 +1,23 @@
 #!/usr/bin/env node
-import { runCommand } from '../src/commands/run.js';
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-await runCommand({
-  captureFile: 'fixtures/sample-capture.json',
-  outDir: './take5-output-smoke',
-  debug: false,
-  cutDelays: false,
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const cliPath = path.resolve(scriptDir, '../src/cli.js');
+
+const result = spawnSync(process.execPath, [cliPath, 'run', 'fixtures/sample-capture.json', '--out', './take5-output-smoke'], {
+  encoding: 'utf8',
 });
+
+if (result.stdout) {
+  process.stdout.write(result.stdout);
+}
+
+if (result.stderr) {
+  process.stderr.write(result.stderr);
+}
+
+if (result.status !== 0) {
+  process.exit(result.status ?? 1);
+}
