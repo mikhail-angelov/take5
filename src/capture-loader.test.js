@@ -58,3 +58,34 @@ test('loadCaptureBundle rejects malformed JSON', async () => {
     await fs.rm(captureDir, { recursive: true, force: true });
   }
 });
+
+test('loadCaptureBundle accepts BOM-prefixed JSON', async () => {
+  const captureDir = await fs.mkdtemp(path.join(os.tmpdir(), 'take5-capture-'));
+  const capturePath = path.join(captureDir, `bom-${randomUUID()}.json`);
+
+  await fs.writeFile(
+    capturePath,
+    '\uFEFF' +
+      JSON.stringify({
+        metadata: {
+          schemaVersion: 1,
+          scenarioId: 'bom-capture',
+        },
+        steps: [
+          {
+            type: 'navigate',
+            url: 'https://example.com',
+          },
+        ],
+        annotations: [],
+        debug: {},
+      }),
+  );
+
+  try {
+    const bundle = await loadCaptureBundle(capturePath);
+    assert.equal(bundle.metadata.scenarioId, 'bom-capture');
+  } finally {
+    await fs.rm(captureDir, { recursive: true, force: true });
+  }
+});

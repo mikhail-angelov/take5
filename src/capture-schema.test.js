@@ -95,6 +95,15 @@ test('validateCaptureBundle enforces the required top-level fields', () => {
       }),
     /schemaVersion must be a positive integer/,
   );
+
+  assert.throws(
+    () =>
+      validateCaptureBundle({
+        ...validBundle,
+        metadata: { ...validBundle.metadata, scenarioId: '   ' },
+      }),
+    /metadata\.scenarioId must be a non-empty string/,
+  );
 });
 
 test('validateCaptureBundle validates per-step requirements', () => {
@@ -184,6 +193,15 @@ test('validateCaptureBundle validates per-step requirements', () => {
       validateCaptureBundle({
         ...validBundle,
         steps: [{ type: 'wait', ms: Number.NaN }],
+      }),
+    /wait step requires numeric ms/,
+  );
+
+  assert.throws(
+    () =>
+      validateCaptureBundle({
+        ...validBundle,
+        steps: [{ type: 'wait', ms: -1 }],
       }),
     /wait step requires numeric ms/,
   );

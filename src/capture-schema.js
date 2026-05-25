@@ -72,7 +72,7 @@ function validateStep(step) {
       }
       break;
     case 'wait':
-      if (!isFiniteNumber(step.ms)) {
+      if (!isFiniteNumber(step.ms) || step.ms < 0) {
         throw new Error('wait step requires numeric ms');
       }
       break;
@@ -121,7 +121,7 @@ export function validateCaptureBundle(bundle) {
     throw new Error('Capture bundle metadata.schemaVersion must be a positive integer');
   }
 
-  if (typeof bundle.metadata.scenarioId !== 'string' || bundle.metadata.scenarioId.length === 0) {
+  if (!isNonEmptyString(bundle.metadata.scenarioId)) {
     throw new Error('Capture bundle metadata.scenarioId must be a non-empty string');
   }
 
