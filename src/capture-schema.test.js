@@ -244,11 +244,37 @@ test('validateCaptureBundle validates annotation entries', () => {
     /annotations require selector or targetRect/,
   );
 
+  assert.throws(
+    () =>
+      validateCaptureBundle({
+        ...validBundle,
+        annotations: [{ description: 'Check this', selector: '#target', targetRect: { x: 1, y: 2, width: 3 } }],
+      }),
+    /annotations require a valid targetRect/,
+  );
+
+  assert.throws(
+    () =>
+      validateCaptureBundle({
+        ...validBundle,
+        annotations: [{ description: 'Check this', targetRect: { x: 1, y: 2, width: 0, height: 10 } }],
+      }),
+    /annotations require a valid targetRect/,
+  );
+
   assert.deepEqual(
     validateCaptureBundle({
       ...validBundle,
       annotations: [{ description: 'Check this', selector: '#target' }],
     }).annotations,
     [{ description: 'Check this', selector: '#target' }],
+  );
+
+  assert.deepEqual(
+    validateCaptureBundle({
+      ...validBundle,
+      annotations: [{ description: 'Check this', targetRect: { x: 1, y: 2, width: 3, height: 4 } }],
+    }).annotations,
+    [{ description: 'Check this', targetRect: { x: 1, y: 2, width: 3, height: 4 } }],
   );
 });

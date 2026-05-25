@@ -96,12 +96,24 @@ function validateAnnotation(annotation) {
   }
 
   const hasSelector = isNonEmptyString(annotation.selector);
-  const hasTargetRect =
-    isPlainObject(annotation.targetRect) &&
-    isFiniteNumber(annotation.targetRect.x) &&
-    isFiniteNumber(annotation.targetRect.y) &&
-    isFiniteNumber(annotation.targetRect.width) &&
-    isFiniteNumber(annotation.targetRect.height);
+  const hasTargetRect = annotation.targetRect !== undefined && annotation.targetRect !== null;
+
+  if (hasTargetRect) {
+    if (!isPlainObject(annotation.targetRect)) {
+      throw new Error('Capture bundle annotations require a valid targetRect');
+    }
+
+    if (
+      !isFiniteNumber(annotation.targetRect.x) ||
+      !isFiniteNumber(annotation.targetRect.y) ||
+      !isFiniteNumber(annotation.targetRect.width) ||
+      !isFiniteNumber(annotation.targetRect.height) ||
+      annotation.targetRect.width <= 0 ||
+      annotation.targetRect.height <= 0
+    ) {
+      throw new Error('Capture bundle annotations require a valid targetRect');
+    }
+  }
 
   if (!hasSelector && !hasTargetRect) {
     throw new Error('Capture bundle annotations require selector or targetRect');
