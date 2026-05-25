@@ -3,12 +3,41 @@ import { constants as fsConstants } from 'node:fs';
 import { createLogger } from '../logger.js';
 import { CliOperationError } from '../errors.js';
 
-export async function runCommand({ captureFile, outDir, debug, cutDelays }) {
+async function validateCaptureFile(captureFile) {
   try {
+    const stats = await fs.stat(captureFile);
+    if (!stats.isFile()) {
+      throw new CliOperationError(`Capture file must be a regular file: ${captureFile}`);
+    }
     await fs.access(captureFile, fsConstants.R_OK);
-  } catch {
+  } catch (error) {
+    if (error instanceof CliOperationError) {
+      throw error;
+    }
     throw new CliOperationError(`Capture file is not readable: ${captureFile}`);
   }
+}
+
+async function validateOutDir(outDir) {
+  try {
+    const stats = await fs.stat(outDir);
+    if (!stats.isDirectory()) {
+      throw new CliOperationError(`Output path must be a directory: ${outDir}`);
+    }
+  } catch (error) {
+    if (error && error.code === 'ENOENT') {
+      return;
+    }
+    if (error instanceof CliOperationError) {
+      throw error;
+    }
+    throw new CliOperationError(`Output path must be a directory: ${outDir}`);
+  }
+}
+
+export async function runCommand({ captureFile, outDir, debug, cutDelays }) {
+  await validateCaptureFile(captureFile);
+  await validateOutDir(outDir);
 
   await fs.mkdir(outDir, { recursive: true });
 

@@ -6,22 +6,21 @@ import { runCommand } from './commands/run.js';
 import { CliOperationError, CliUsageError } from './errors.js';
 
 export function parseCliArgs(argv = []) {
-  const [command = 'run', ...rest] = argv;
-
-  if (command !== 'run') {
-    throw new CliUsageError(`Unknown command: ${command}`);
-  }
+  const [firstArg, ...rest] = argv;
+  const hasExplicitRun = firstArg === 'run';
+  const command = 'run';
+  const captureTokens = hasExplicitRun ? rest : argv;
 
   const result = {
-    command: 'run',
+    command,
     captureFile: null,
     outDir: './take5-output',
     debug: false,
     cutDelays: false,
   };
 
-  for (let index = 0; index < rest.length; index += 1) {
-    const token = rest[index];
+  for (let index = 0; index < captureTokens.length; index += 1) {
+    const token = captureTokens[index];
 
     if (!result.captureFile && !token.startsWith('-')) {
       result.captureFile = token;
@@ -29,7 +28,7 @@ export function parseCliArgs(argv = []) {
     }
 
     if (token === '--out') {
-      const next = rest[index + 1];
+      const next = captureTokens[index + 1];
       if (!next || next.startsWith('-')) {
         throw new CliUsageError('--out flag requires a directory');
       }
