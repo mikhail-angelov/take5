@@ -9,6 +9,7 @@ const SUPPORTED_STEP_TYPES = new Set([
   'assert_text',
 ]);
 
+const SUPPORTED_SCHEMA_VERSIONS = new Set([1]);
 const SUPPORTED_SCROLL_DIRECTIONS = new Set(['up', 'down']);
 
 function isPlainObject(value) {
@@ -131,6 +132,10 @@ export function validateCaptureBundle(bundle) {
 
   if (!Number.isInteger(bundle.metadata.schemaVersion) || bundle.metadata.schemaVersion < 1) {
     throw new Error('Capture bundle metadata.schemaVersion must be a positive integer');
+  }
+
+  if (!SUPPORTED_SCHEMA_VERSIONS.has(bundle.metadata.schemaVersion)) {
+    throw new Error(`Unsupported capture bundle schemaVersion: ${bundle.metadata.schemaVersion}`);
   }
 
   if (!isNonEmptyString(bundle.metadata.scenarioId)) {

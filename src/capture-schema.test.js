@@ -100,6 +100,15 @@ test('validateCaptureBundle enforces the required top-level fields', () => {
     () =>
       validateCaptureBundle({
         ...validBundle,
+        metadata: { ...validBundle.metadata, schemaVersion: 2 },
+      }),
+    /Unsupported capture bundle schemaVersion: 2/,
+  );
+
+  assert.throws(
+    () =>
+      validateCaptureBundle({
+        ...validBundle,
         metadata: { ...validBundle.metadata, scenarioId: '   ' },
       }),
     /metadata\.scenarioId must be a non-empty string/,
