@@ -17,13 +17,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": [
-        "toolbar.html",
-        "toolbar.css",
-        "toolbar.js",
-        "scenario-store.js",
-        "schema-export.js"
-      ],
+      "resources": ["toolbar.html"],
       "matches": ["<all_urls>"]
     }
   ]
