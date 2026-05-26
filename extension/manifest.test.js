@@ -35,8 +35,11 @@ test('manifest exposes content-script runtime modules as web-accessible resource
   );
 });
 
-test('manifest keeps the browser action free of popup wiring', async () => {
+test('manifest declares a browser action without popup wiring', async () => {
   const manifest = await loadManifest();
 
+  assert.equal(typeof manifest.action, 'object');
+  assert.notEqual(manifest.action, null);
+  assert.deepEqual(manifest.action, {});
   assert.equal(manifest.action?.default_popup, undefined);
 });
