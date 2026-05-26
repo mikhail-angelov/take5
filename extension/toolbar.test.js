@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createToolbarController } from './toolbar.js';
+import { buildCaptureStartPayload, createToolbarController } from './toolbar.js';
 
 function createScenario(id, name) {
   return {
@@ -65,4 +65,21 @@ test('toolbar controller keeps dirty editor content when refresh is canceled', (
   assert.equal(controller.getEditorValue(), '{"draft":true}');
   assert.equal(controller.getScenarios()[0].name, 'First');
   assert.equal(prompts.length, 1);
+});
+
+test('buildCaptureStartPayload defers page metadata to the content script for new captures', () => {
+  assert.deepEqual(buildCaptureStartPayload(null), {});
+});
+
+test('buildCaptureStartPayload preserves saved scenario identity for recapture', () => {
+  assert.deepEqual(
+    buildCaptureStartPayload({
+      id: 'demo-flow',
+      name: 'Demo flow',
+    }),
+    {
+      scenarioId: 'demo-flow',
+      name: 'Demo flow',
+    },
+  );
 });

@@ -99,7 +99,7 @@ function isNavigationKey(key) {
 function createInitialBundle(options, now) {
   const startedAt = getTimestamp(now);
   const scenarioId =
-    options.scenarioId ??
+    (isNonEmptyString(options.scenarioId) ? options.scenarioId.trim() : null) ??
     `capture-${startedAt.replace(/[:.]/g, '-')}-${Math.random().toString(16).slice(2, 8)}`;
 
   return {

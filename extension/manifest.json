@@ -17,7 +17,14 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["toolbar.html"],
+      "resources": [
+        "toolbar.html",
+        "annotation-overlay.js",
+        "capture-engine.js",
+        "capture-schema.js",
+        "replay-engine.js",
+        "plan-generator.js"
+      ],
       "matches": ["<all_urls>"]
     }
   ]

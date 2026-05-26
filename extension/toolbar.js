@@ -10,6 +10,20 @@ function createEmptyBundle() {
   };
 }
 
+export function buildCaptureStartPayload(selectedScenario) {
+  const payload = {};
+
+  if (selectedScenario?.id) {
+    payload.scenarioId = selectedScenario.id;
+  }
+
+  if (selectedScenario?.name) {
+    payload.name = selectedScenario.name;
+  }
+
+  return payload;
+}
+
 function createConfirmDiscardChanges(confirmImplementation) {
   if (typeof confirmImplementation === 'function') {
     return confirmImplementation;
@@ -313,11 +327,7 @@ function wireActions() {
   });
 
   document.querySelector('[data-action="start"]').addEventListener('click', () => {
-    sendCommand('capture:start', {
-      scenarioId: controller.getSelectedScenario()?.id ?? '',
-      name: controller.getSelectedScenario()?.name ?? document.title,
-      baseUrl: window.location.href,
-    });
+    sendCommand('capture:start', buildCaptureStartPayload(controller.getSelectedScenario()));
   });
 
   document.querySelector('[data-action="stop"]').addEventListener('click', () => {

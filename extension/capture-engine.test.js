@@ -130,3 +130,24 @@ test('createCaptureEngine records semantic steps and converts Ctrl-clicks into a
   assert.ok(overlay.calls.some(([type]) => type === 'promptForAnnotation'));
   assert.equal(overlay.calls.at(-1)[0], 'pinAnnotation');
 });
+
+test('createCaptureEngine generates a scenario id when startCapture receives an empty one', () => {
+  const document = createFakeDocument();
+  const overlay = createFakeOverlay();
+
+  const engine = createCaptureEngine({
+    document,
+    overlay,
+    now: () => '2026-05-26T10:00:00.000Z',
+  });
+
+  engine.startCapture({
+    scenarioId: '',
+    name: 'Capture demo',
+    baseUrl: 'https://example.com/app',
+  });
+
+  const bundle = engine.getBundle();
+
+  assert.match(bundle.metadata.scenarioId, /^capture-2026-05-26T10-00-00-000Z-/);
+});
