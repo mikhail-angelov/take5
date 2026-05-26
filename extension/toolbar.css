@@ -53,6 +53,12 @@ body {
   gap: 12px;
 }
 
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .eyebrow {
   margin: 0 0 4px;
   text-transform: uppercase;
@@ -138,6 +144,10 @@ button.primary {
   color: #05101d;
   border-color: transparent;
   font-weight: 800;
+}
+
+button.ghost {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .field-group {

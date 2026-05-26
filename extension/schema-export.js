@@ -4,6 +4,10 @@ function isPlainObject(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function isNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
 function unwrapBundle(candidate) {
   if (isPlainObject(candidate?.bundle)) {
     return candidate.bundle;
@@ -33,4 +37,33 @@ export function parseScenarioJson(jsonText) {
   }
 
   return validateCaptureBundle(parsed);
+}
+
+function sanitizeFilenamePart(value) {
+  const raw = isNonEmptyString(value) ? value.trim() : 'scenario';
+  const sanitized = raw
+    .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ')
+    .replace(/[^A-Za-z0-9._ -]+/g, ' ')
+    .replace(/[-\s]+/g, ' ')
+    .replace(/^\.+/, '')
+    .replace(/\.+$/, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+
+  return sanitized.length > 0 ? sanitized.slice(0, 80) : 'scenario';
+}
+
+export function buildScenarioExportFilename(scenario) {
+  const candidate =
+    scenario?.name ??
+    scenario?.title ??
+    scenario?.id ??
+    scenario?.metadata?.scenarioId ??
+    scenario?.bundle?.metadata?.scenarioId ??
+    'scenario';
+
+  return `take5-${sanitizeFilenamePart(candidate)}.json`;
 }

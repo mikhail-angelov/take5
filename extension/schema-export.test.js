@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseScenarioJson, serializeScenario } from './schema-export.js';
+import { buildScenarioExportFilename, parseScenarioJson, serializeScenario } from './schema-export.js';
 
 const bundle = {
   metadata: {
@@ -42,5 +42,21 @@ test('parseScenarioJson rejects malformed or invalid input', () => {
         }),
       ),
     /steps must be a non-empty array/,
+  );
+});
+
+test('buildScenarioExportFilename sanitizes unsafe scenario identifiers', () => {
+  assert.equal(
+    buildScenarioExportFilename({
+      id: 'folder/name:demo\\draft',
+    }),
+    'take5-folder-name-demo-draft.json',
+  );
+
+  assert.equal(
+    buildScenarioExportFilename({
+      name: '  ..Final: Walkthrough??  ',
+    }),
+    'take5-Final-Walkthrough.json',
   );
 });

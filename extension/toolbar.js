@@ -1,4 +1,6 @@
-import { parseScenarioJson, serializeScenario } from './schema-export.js';
+import { buildScenarioExportFilename, parseScenarioJson, serializeScenario } from './schema-export.js';
+
+const TOGGLE_MESSAGE_TYPE = 'take5:toolbar-toggle';
 
 const state = {
   mode: 'idle',
@@ -14,6 +16,7 @@ const elements = {
   scenarioList: document.getElementById('scenario-list'),
   scenarioJson: document.getElementById('scenario-json'),
   feedback: document.getElementById('feedback'),
+  dismissButton: document.getElementById('dismiss-button'),
   refreshButton: document.getElementById('refresh-button'),
   importButton: document.getElementById('import-button'),
   exportButton: document.getElementById('export-button'),
@@ -139,7 +142,7 @@ async function exportSelectedScenario() {
   try {
     await chrome.downloads.download({
       url,
-      filename: `take5-${selected.id}.json`,
+      filename: buildScenarioExportFilename(selected),
       saveAs: true,
     });
     setFeedback(`Exported ${selected.name}`);
@@ -161,6 +164,10 @@ async function importScenarioFile(file) {
 }
 
 function wireActions() {
+  elements.dismissButton.addEventListener('click', () => {
+    window.parent.postMessage({ type: TOGGLE_MESSAGE_TYPE }, '*');
+  });
+
   document.querySelector('[data-action="start"]').addEventListener('click', () => {
     setMode('capturing');
     setFeedback('Capture shell armed. Scenario recording is not wired yet.');
@@ -250,6 +257,8 @@ async function init() {
   await refreshScenarios({ preserveSelection: false });
 }
 
-init().catch((error) => {
-  setFeedback(error.message, true);
-});
+if (typeof document !== 'undefined') {
+  init().catch((error) => {
+    setFeedback(error.message, true);
+  });
+}

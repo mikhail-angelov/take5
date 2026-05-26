@@ -103,6 +103,31 @@ function normalizeScenarioRecord(record, existingRecord, now) {
   };
 }
 
+function normalizeStoredScenarioRecord(record, now) {
+  if (!isPlainObject(record)) {
+    return null;
+  }
+
+  try {
+    const bundle = normalizeScenarioBundle(record);
+    const scenarioId = bundle.metadata.scenarioId;
+    const createdAt = normalizeTimestamp(record.createdAt ?? bundle.metadata.createdAt, now);
+    const updatedAt = normalizeTimestamp(record.updatedAt ?? record.createdAt ?? bundle.metadata.updatedAt, createdAt);
+
+    return {
+      id: scenarioId,
+      name: normalizeDisplayName(record, scenarioId),
+      createdAt,
+      updatedAt,
+      stepCount: bundle.steps.length,
+      annotationCount: bundle.annotations.length,
+      bundle,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function getScenarioIdFromInput(input) {
   if (isPlainObject(input?.bundle) && isNonEmptyString(input.bundle?.metadata?.scenarioId)) {
     return input.bundle.metadata.scenarioId.trim();
@@ -167,6 +192,7 @@ function createChromeStorageAdapter() {
 
 export function createScenarioStore(adapter = createChromeStorageAdapter(), options = {}) {
   const now = options.now ?? (() => new Date().toISOString());
+  let mutationQueue = Promise.resolve();
 
   async function readScenarios() {
     const scenarios = await adapter.readScenarios();
@@ -174,11 +200,27 @@ export function createScenarioStore(adapter = createChromeStorageAdapter(), opti
       return [];
     }
 
-    return scenarios.filter(isPlainObject).map((scenario) => cloneValue(scenario));
+    const readAt = new Date().toISOString();
+    const normalized = [];
+
+    for (const scenario of scenarios) {
+      const record = normalizeStoredScenarioRecord(cloneValue(scenario), readAt);
+      if (record) {
+        normalized.push(record);
+      }
+    }
+
+    return normalized;
   }
 
   async function writeScenarios(scenarios) {
     await adapter.writeScenarios(scenarios);
+  }
+
+  function runExclusive(operation) {
+    const next = mutationQueue.then(operation, operation);
+    mutationQueue = next.catch(() => {});
+    return next;
   }
 
   return {
@@ -187,37 +229,41 @@ export function createScenarioStore(adapter = createChromeStorageAdapter(), opti
     },
 
     async saveScenario(input) {
-      const scenarios = await readScenarios();
-      const nextNow = now();
-      const scenarioId = getScenarioIdFromInput(input);
-      const index = scenarios.findIndex((scenario) => scenario.id === scenarioId);
-      const existingRecord = index >= 0 ? scenarios[index] : null;
-      const record = normalizeScenarioRecord(input, existingRecord, nextNow);
+      return runExclusive(async () => {
+        const scenarios = await readScenarios();
+        const nextNow = now();
+        const scenarioId = getScenarioIdFromInput(input);
+        const index = scenarios.findIndex((scenario) => scenario.id === scenarioId);
+        const existingRecord = index >= 0 ? scenarios[index] : null;
+        const record = normalizeScenarioRecord(input, existingRecord, nextNow);
 
-      if (index >= 0) {
-        scenarios[index] = record;
-      } else {
-        scenarios.push(record);
-      }
+        if (index >= 0) {
+          scenarios[index] = record;
+        } else {
+          scenarios.push(record);
+        }
 
-      await writeScenarios(scenarios);
-      return cloneValue(record);
+        await writeScenarios(scenarios);
+        return cloneValue(record);
+      });
     },
 
     async deleteScenario(id) {
-      if (!isNonEmptyString(id)) {
-        throw new Error('Scenario id must be a non-empty string');
-      }
+      return runExclusive(async () => {
+        if (!isNonEmptyString(id)) {
+          throw new Error('Scenario id must be a non-empty string');
+        }
 
-      const scenarios = await readScenarios();
-      const index = scenarios.findIndex((scenario) => scenario.id === id.trim());
-      if (index < 0) {
-        return false;
-      }
+        const scenarios = await readScenarios();
+        const index = scenarios.findIndex((scenario) => scenario.id === id.trim());
+        if (index < 0) {
+          return false;
+        }
 
-      scenarios.splice(index, 1);
-      await writeScenarios(scenarios);
-      return true;
+        scenarios.splice(index, 1);
+        await writeScenarios(scenarios);
+        return true;
+      });
     },
   };
 }
