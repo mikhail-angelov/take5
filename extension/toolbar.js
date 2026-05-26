@@ -1,6 +1,7 @@
 import { buildScenarioExportFilename, parseScenarioJson, serializeScenario } from './schema-export.js';
 
 const TOGGLE_MESSAGE_TYPE = 'take5:toolbar-toggle';
+const COMMAND_MESSAGE_TYPE = 'take5:command';
 
 function createEmptyBundle() {
   return {
@@ -128,6 +129,7 @@ export function createToolbarController(options = {}) {
 }
 
 const controller = createToolbarController();
+let activeCaptureBundle = null;
 
 const hasDocument = typeof document !== 'undefined';
 
@@ -158,8 +160,19 @@ function setMode(mode) {
   elements.statusPill.textContent = label;
 }
 
+function sendCommand(command, payload = {}) {
+  window.parent.postMessage(
+    {
+      type: COMMAND_MESSAGE_TYPE,
+      command,
+      payload,
+    },
+    '*',
+  );
+}
+
 function renderStats() {
-  const bundle = controller.getCurrentBundle();
+  const bundle = activeCaptureBundle ?? controller.getCurrentBundle();
 
   elements.stepCount.textContent = String(bundle.steps?.length ?? 0);
   elements.annotationCount.textContent = String(bundle.annotations?.length ?? 0);
@@ -222,11 +235,20 @@ async function refreshScenarios(options = {}) {
   return true;
 }
 
+function getReplayBundleFromEditor() {
+  if (!elements.scenarioJson.value.trim()) {
+    return controller.getCurrentBundle();
+  }
+
+  return parseScenarioJson(elements.scenarioJson.value);
+}
+
 async function saveScenarioFromEditor() {
   const bundle = parseScenarioJson(elements.scenarioJson.value);
   const response = await sendMessage('take5:save-scenario', bundle);
   const savedScenario = response.scenario;
   const listResponse = await sendMessage('take5:list-scenarios');
+  activeCaptureBundle = null;
   controller.applySavedScenario(savedScenario, listResponse.scenarios ?? []);
   renderAll();
   setFeedback(`Saved ${savedScenario.name}`);
@@ -279,6 +301,7 @@ async function importScenarioFile(file) {
   const bundle = parseScenarioJson(json);
   const response = await sendMessage('take5:save-scenario', bundle);
   const listResponse = await sendMessage('take5:list-scenarios');
+  activeCaptureBundle = null;
   controller.applySavedScenario(response.scenario, listResponse.scenarios ?? []);
   renderAll();
   setFeedback(`Imported ${response.scenario.name}`);
@@ -290,13 +313,15 @@ function wireActions() {
   });
 
   document.querySelector('[data-action="start"]').addEventListener('click', () => {
-    setMode('capturing');
-    setFeedback('Capture shell armed. Scenario recording is not wired yet.');
+    sendCommand('capture:start', {
+      scenarioId: controller.getSelectedScenario()?.id ?? '',
+      name: controller.getSelectedScenario()?.name ?? document.title,
+      baseUrl: window.location.href,
+    });
   });
 
   document.querySelector('[data-action="stop"]').addEventListener('click', () => {
-    setMode('idle');
-    setFeedback('Capture stopped.');
+    sendCommand('capture:stop');
   });
 
   document.querySelector('[data-action="save"]').addEventListener('click', async () => {
@@ -307,9 +332,15 @@ function wireActions() {
     }
   });
 
-  document.querySelector('[data-action="replay"]').addEventListener('click', () => {
-    setMode('replaying');
-    setFeedback('Replay shell is present, but the replay engine is not implemented yet.');
+  document.querySelector('[data-action="replay"]').addEventListener('click', (event) => {
+    try {
+      sendCommand('replay:start', {
+        mode: event.shiftKey ? 'step' : 'auto',
+        bundle: getReplayBundleFromEditor(),
+      });
+    } catch (error) {
+      setFeedback(error.message, true);
+    }
   });
 
   document.querySelector('[data-action="scenarios"]').addEventListener('click', async () => {
@@ -386,6 +417,32 @@ function wireActions() {
 
     renderScenarioJson();
     renderStats();
+  });
+
+  window.addEventListener('message', (event) => {
+    if (event.source !== window.parent) {
+      return;
+    }
+
+    const message = event.data;
+    if (!message?.type) {
+      return;
+    }
+
+    if (message.type === 'take5:status') {
+      setMode(message.mode);
+      setFeedback(message.message ?? '');
+      return;
+    }
+
+    if (message.type === 'take5:capture-state' && message.bundle) {
+      activeCaptureBundle = message.bundle;
+      controller.setEditorValue(serializeScenario(message.bundle), { markDirty: false });
+      renderScenarioJson();
+      renderStats();
+      setMode('capturing');
+      setFeedback('Capture bundle loaded. Save it when you are ready.');
+    }
   });
 }
 

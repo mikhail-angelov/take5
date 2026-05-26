@@ -1,6 +1,7 @@
 const TOOLBAR_FRAME_ID = 'take5-toolbar-frame';
 const TOOLBAR_LAUNCHER_ID = 'take5-toolbar-launcher';
 const TOGGLE_MESSAGE_TYPE = 'take5:toolbar-toggle';
+const COMMAND_MESSAGE_TYPE = 'take5:command';
 
 function injectToolbar() {
   if (document.getElementById(TOOLBAR_FRAME_ID) || document.getElementById(TOOLBAR_LAUNCHER_ID)) {
@@ -62,4 +63,182 @@ function injectToolbar() {
   root.appendChild(frame);
 }
 
-injectToolbar();
+function getToolbarFrame() {
+  return document.getElementById(TOOLBAR_FRAME_ID);
+}
+
+function postToToolbar(message) {
+  const frame = getToolbarFrame();
+  if (!frame?.contentWindow) {
+    return;
+  }
+
+  frame.contentWindow.postMessage(message, '*');
+}
+
+function postStatus(mode, message) {
+  postToToolbar({
+    type: 'take5:status',
+    mode,
+    message,
+  });
+}
+
+async function bootstrap() {
+  injectToolbar();
+
+  const [{ createAnnotationOverlay }, { createCaptureEngine }, { createReplayEngine }] = await Promise.all([
+    import(chrome.runtime.getURL('annotation-overlay.js')),
+    import(chrome.runtime.getURL('capture-engine.js')),
+    import(chrome.runtime.getURL('replay-engine.js')),
+  ]);
+
+  const overlay = createAnnotationOverlay(document);
+  const captureEngine = createCaptureEngine({
+    document,
+    window,
+    overlay,
+    baseUrl: window.location.href,
+    name: document.title,
+  });
+  const replayEngine = createReplayEngine({
+    overlay,
+    runStep: async (step) => {
+      const selector = step.selector ?? step.ref ?? null;
+      const target = selector ? document.querySelector(selector) : null;
+
+      switch (step.type) {
+        case 'navigate':
+          if (step.url && window.location.href !== step.url) {
+            window.location.href = step.url;
+          }
+          break;
+        case 'click':
+          target?.click?.();
+          break;
+        case 'fill':
+          if (target) {
+            target.focus?.();
+            target.value = step.value ?? '';
+            target.dispatchEvent?.(new Event('input', { bubbles: true }));
+            target.dispatchEvent?.(new Event('change', { bubbles: true }));
+          }
+          break;
+        case 'select':
+          if (target) {
+            target.value = step.value ?? '';
+            target.dispatchEvent?.(new Event('change', { bubbles: true }));
+          }
+          break;
+        case 'keypress':
+          document.activeElement?.dispatchEvent?.(new KeyboardEvent('keydown', { key: step.key, bubbles: true }));
+          break;
+        case 'scroll':
+          window.scrollBy?.(0, step.direction === 'down' ? step.amount : -step.amount);
+          break;
+        case 'wait':
+          await new Promise((resolve) => setTimeout(resolve, step.ms));
+          break;
+        case 'assert_text':
+          if (!target || !String(target.textContent ?? '').includes(step.text)) {
+            throw new Error(`assert_text failed for ${selector ?? step.ref ?? 'target'}`);
+          }
+          break;
+        default:
+          break;
+      }
+    },
+  });
+
+  window.addEventListener('keydown', async (event) => {
+    if (replayEngine.getState().mode !== 'step') {
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      await replayEngine.next();
+      postStatus('replaying', 'Advanced one step.');
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      await replayEngine.back();
+      postStatus('replaying', 'Moved back one step.');
+    }
+  });
+
+  async function handleReplayRequest(payload = {}) {
+    const bundle = payload.bundle ?? captureEngine.getBundle?.() ?? null;
+    if (!bundle) {
+      postStatus('idle', 'Pick a scenario or start a capture first.');
+      return;
+    }
+
+    await replayEngine.load(bundle);
+
+    if (payload.mode === 'step') {
+      postStatus('replaying', 'Step-through replay ready. Use the Next/Back keyboard shortcuts.');
+      return;
+    }
+
+    postStatus('replaying', 'Replaying scenario.');
+    await replayEngine.play();
+    postStatus('idle', 'Replay finished.');
+  }
+
+  window.addEventListener('message', async (event) => {
+    const message = event.data;
+    if (!message || message.type !== COMMAND_MESSAGE_TYPE) {
+      return;
+    }
+
+    try {
+      switch (message.command) {
+        case 'capture:start': {
+          const bundle = captureEngine.startCapture({
+            scenarioId: message.payload?.scenarioId,
+            name: message.payload?.name ?? document.title,
+            baseUrl: message.payload?.baseUrl ?? window.location.href,
+            viewportPreset: message.payload?.viewportPreset,
+          });
+          postStatus('capturing', 'Capture started.');
+          postToToolbar({ type: 'take5:capture-state', bundle });
+          break;
+        }
+        case 'capture:stop': {
+          const bundle = captureEngine.stopCapture();
+          postStatus('idle', 'Capture stopped.');
+          postToToolbar({ type: 'take5:capture-state', bundle });
+          break;
+        }
+        case 'replay:start':
+          await handleReplayRequest(message.payload);
+          break;
+        case 'replay:next':
+          await replayEngine.next();
+          postStatus('replaying', 'Advanced one step.');
+          break;
+        case 'replay:back':
+          await replayEngine.back();
+          postStatus('replaying', 'Moved back one step.');
+          break;
+        case 'replay:stop':
+          await replayEngine.stop();
+          postStatus('idle', 'Replay stopped.');
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      postStatus('idle', error.message);
+    }
+  });
+
+  postStatus('idle', 'Ready.');
+}
+
+bootstrap().catch((error) => {
+  postStatus('idle', error.message);
+});
