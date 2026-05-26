@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "scenarioId": "sample-scenario",
+  "baseUrl": null,
+  "viewportPreset": "desktop-1280",
+  "annotations": [],
+  "steps": [
+    {
+      "id": "step-1",
+      "type": "navigate",
+      "url": "https://example.com",
+      "annotations": []
+    }
+  ]
+}

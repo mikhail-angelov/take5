@@ -1,0 +1,14 @@
+{
+  "metadata": {
+    "schemaVersion": 1,
+    "scenarioId": "sample-scenario"
+  },
+  "steps": [
+    {
+      "type": "navigate",
+      "url": "https://example.com"
+    }
+  ],
+  "annotations": [],
+  "debug": {}
+}

@@ -5,17 +5,22 @@
   "repository": {
     "url": "https://github.com/mikhail-angelov/take5"
   },
-  "description": "AI agent that explores your web app and records a polished demo video",
+  "description": "Extension-first CLI for replaying captured web app flows",
   "type": "module",
   "bin": {
     "take5": "./src/cli.js"
   },
   "files": [
-    "src/"
+    "src/",
+    "extension/",
+    "fixtures/",
+    "scripts/",
+    "README.md"
   ],
   "scripts": {
-    "start": "node --env-file=.env src/cli.js",
-    "dev": "node --env-file=.env src/cli.js --cut-delays -f test3.md",
+    "start": "node src/cli.js run fixtures/sample-capture.json",
+    "dev": "node src/cli.js run fixtures/sample-capture.json --cut-delays",
+    "smoke": "node scripts/smoke-run.js",
     "test": "node --test"
   },
   "dependencies": {
