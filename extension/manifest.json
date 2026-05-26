@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Take5",
+  "version": "0.1.0",
+  "description": "Capture and manage product walkthrough scenarios locally.",
+  "permissions": ["storage", "activeTab", "scripting", "downloads"],
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "toolbar.html",
+        "toolbar.css",
+        "toolbar.js",
+        "scenario-store.js",
+        "schema-export.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
