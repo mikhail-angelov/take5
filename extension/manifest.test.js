@@ -34,3 +34,9 @@ test('manifest exposes content-script runtime modules as web-accessible resource
     ],
   );
 });
+
+test('manifest wires the browser action to a popup', async () => {
+  const manifest = await loadManifest();
+
+  assert.equal(manifest.action?.default_popup, 'popup.html');
+});
