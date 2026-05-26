@@ -1,4 +1,4 @@
-import { validateCaptureBundle } from '../src/capture-schema.js';
+import { validateCaptureBundle } from './capture-schema.js';
 
 function isPlainObject(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

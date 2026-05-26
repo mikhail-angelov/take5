@@ -1,4 +1,4 @@
-import { validateCaptureBundle } from '../src/capture-schema.js';
+import { validateCaptureBundle } from './capture-schema.js';
 
 const STORAGE_KEY = 'take5.scenarios';
 

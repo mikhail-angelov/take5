@@ -1,4 +1,4 @@
-import { createReplayPlan } from '../src/plan-generator.js';
+import { createReplayPlan } from './plan-generator.js';
 
 function cloneValue(value) {
   if (typeof structuredClone === 'function') {
