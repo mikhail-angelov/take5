@@ -27,7 +27,13 @@ chrome.action.onClicked.addListener(async (tab) => {
   }
 
   try {
-    if (!openOnLoadState.requestOpenOnNextLoad(tab.id)) {
+    if (openOnLoadState.isEnabledForTab(tab.id)) {
+      openOnLoadState.disableForTab(tab.id);
+      await chrome.tabs.sendMessage(tab.id, { type: 'take5:hide-toolbar' });
+      return;
+    }
+
+    if (!openOnLoadState.enableForTab(tab.id)) {
       return;
     }
 

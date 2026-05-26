@@ -271,13 +271,23 @@ async function bootstrap() {
   });
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message?.type !== 'take5:show-toolbar') {
+    if (message?.type === 'take5:show-toolbar') {
+      toolbar?.visibility?.show();
+      sendResponse({ ok: true });
+      return true;
+    }
+
+    if (message?.type === 'take5:hide-toolbar') {
+      toolbar?.visibility?.hide();
+      sendResponse({ ok: true });
+      return true;
+    }
+
+    if (!message?.type) {
       return false;
     }
 
-    toolbar?.visibility?.show();
-    sendResponse({ ok: true });
-    return true;
+    return false;
   });
 
   try {
