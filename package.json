@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "start": "node --env-file=.env src/cli.js",
-    "dev": "node --env-file=.env src/cli.js --cut-delays -f test.md",
+    "dev": "node --env-file=.env src/cli.js --cut-delays -f test3.md",
     "test": "node --test"
   },
   "dependencies": {
