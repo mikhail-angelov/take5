@@ -2,26 +2,151 @@ import { buildScenarioExportFilename, parseScenarioJson, serializeScenario } fro
 
 const TOGGLE_MESSAGE_TYPE = 'take5:toolbar-toggle';
 
-const state = {
-  mode: 'idle',
-  scenarios: [],
-  selectedScenarioId: '',
-};
+function createEmptyBundle() {
+  return {
+    steps: [],
+    annotations: [],
+  };
+}
 
-const elements = {
-  statusPill: document.getElementById('status-pill'),
-  stepCount: document.getElementById('step-count'),
-  annotationCount: document.getElementById('annotation-count'),
-  scenarioCount: document.getElementById('scenario-count'),
-  scenarioList: document.getElementById('scenario-list'),
-  scenarioJson: document.getElementById('scenario-json'),
-  feedback: document.getElementById('feedback'),
-  dismissButton: document.getElementById('dismiss-button'),
-  refreshButton: document.getElementById('refresh-button'),
-  importButton: document.getElementById('import-button'),
-  exportButton: document.getElementById('export-button'),
-  importInput: document.getElementById('import-input'),
-};
+function createConfirmDiscardChanges(confirmImplementation) {
+  if (typeof confirmImplementation === 'function') {
+    return confirmImplementation;
+  }
+
+  if (typeof globalThis.confirm === 'function') {
+    return globalThis.confirm.bind(globalThis);
+  }
+
+  return () => true;
+}
+
+export function createToolbarController(options = {}) {
+  const confirmDiscardChanges = createConfirmDiscardChanges(options.confirmDiscardChanges);
+  const state = {
+    scenarios: [],
+    selectedScenarioId: '',
+    editorValue: '',
+    editorDirty: false,
+  };
+
+  function getSelectedScenario() {
+    return state.scenarios.find((scenario) => scenario.id === state.selectedScenarioId) ?? null;
+  }
+
+  function replaceEditorFromSelection() {
+    const selected = getSelectedScenario();
+    state.editorValue = selected ? serializeScenario(selected.bundle) : '';
+    state.editorDirty = false;
+  }
+
+  function confirmEditorReset(reason) {
+    if (!state.editorDirty) {
+      return true;
+    }
+
+    return confirmDiscardChanges(
+      `Discard unsaved scenario JSON before ${reason}?`,
+    );
+  }
+
+  function applyScenarioSelection(nextScenarioId, options = {}) {
+    const { force = false } = options;
+    if (!force && !confirmEditorReset('switching scenarios')) {
+      return false;
+    }
+
+    state.selectedScenarioId = nextScenarioId;
+    replaceEditorFromSelection();
+    return true;
+  }
+
+  return {
+    getScenarios() {
+      return structuredClone(state.scenarios);
+    },
+
+    getSelectedScenarioId() {
+      return state.selectedScenarioId;
+    },
+
+    getSelectedScenario,
+
+    getEditorValue() {
+      return state.editorValue;
+    },
+
+    isEditorDirty() {
+      return state.editorDirty;
+    },
+
+    setEditorValue(value, options = {}) {
+      state.editorValue = value;
+      state.editorDirty = options.markDirty ?? true;
+    },
+
+    setScenarios(scenarios) {
+      state.scenarios = structuredClone(scenarios);
+      if (!state.scenarios.some((scenario) => scenario.id === state.selectedScenarioId)) {
+        state.selectedScenarioId = state.scenarios[0]?.id ?? '';
+      }
+    },
+
+    selectScenario(nextScenarioId, options = {}) {
+      return applyScenarioSelection(nextScenarioId, options);
+    },
+
+    refreshScenarios(nextScenarios, options = {}) {
+      const { preserveSelection = true, force = false } = options;
+      if (!force && !confirmEditorReset('refreshing scenarios')) {
+        return false;
+      }
+
+      const selectedId = preserveSelection ? state.selectedScenarioId : '';
+      state.scenarios = structuredClone(nextScenarios);
+      state.selectedScenarioId = state.scenarios.some((scenario) => scenario.id === selectedId)
+        ? selectedId
+        : state.scenarios[0]?.id ?? '';
+      replaceEditorFromSelection();
+      return true;
+    },
+
+    syncEditorFromSelection() {
+      replaceEditorFromSelection();
+    },
+
+    applySavedScenario(savedScenario, nextScenarios) {
+      state.scenarios = structuredClone(nextScenarios);
+      state.selectedScenarioId = savedScenario.id;
+      replaceEditorFromSelection();
+    },
+
+    getCurrentBundle() {
+      return getSelectedScenario()?.bundle ?? createEmptyBundle();
+    },
+  };
+}
+
+const controller = createToolbarController();
+
+const hasDocument = typeof document !== 'undefined';
+
+const elements = hasDocument
+  ? {
+      statusPill: document.getElementById('status-pill'),
+      stepCount: document.getElementById('step-count'),
+      annotationCount: document.getElementById('annotation-count'),
+      scenarioCount: document.getElementById('scenario-count'),
+      scenarioList: document.getElementById('scenario-list'),
+      scenarioJson: document.getElementById('scenario-json'),
+      feedback: document.getElementById('feedback'),
+      dismissButton: document.getElementById('dismiss-button'),
+      refreshButton: document.getElementById('refresh-button'),
+      importButton: document.getElementById('import-button'),
+      exportButton: document.getElementById('export-button'),
+      importInput: document.getElementById('import-input'),
+    }
+  : null;
 
 function setFeedback(message, isError = false) {
   elements.feedback.textContent = message;
@@ -29,49 +154,42 @@ function setFeedback(message, isError = false) {
 }
 
 function setMode(mode) {
-  state.mode = mode;
   const label = mode === 'capturing' ? 'Capturing' : mode === 'replaying' ? 'Replaying' : 'Idle';
   elements.statusPill.textContent = label;
 }
 
-function getSelectedScenario() {
-  return state.scenarios.find((scenario) => scenario.id === state.selectedScenarioId) ?? null;
-}
-
 function renderStats() {
-  const selected = getSelectedScenario();
-  const scenario = selected ?? state.scenarios[0] ?? null;
-  const bundle = scenario?.bundle ?? { steps: [], annotations: [] };
+  const bundle = controller.getCurrentBundle();
 
   elements.stepCount.textContent = String(bundle.steps?.length ?? 0);
   elements.annotationCount.textContent = String(bundle.annotations?.length ?? 0);
-  elements.scenarioCount.textContent = String(state.scenarios.length);
+  elements.scenarioCount.textContent = String(controller.getScenarios().length);
 }
 
 function renderScenarioList() {
   elements.scenarioList.innerHTML = '';
 
-  for (const scenario of state.scenarios) {
+  for (const scenario of controller.getScenarios()) {
     const option = document.createElement('option');
     option.value = scenario.id;
     option.textContent = `${scenario.name} · ${scenario.stepCount} steps`;
-    if (scenario.id === state.selectedScenarioId) {
+    if (scenario.id === controller.getSelectedScenarioId()) {
       option.selected = true;
     }
     elements.scenarioList.appendChild(option);
   }
 
-  if (!state.selectedScenarioId && state.scenarios.length > 0) {
-    state.selectedScenarioId = state.scenarios[0].id;
-    elements.scenarioList.value = state.selectedScenarioId;
-  }
-
+  elements.scenarioList.value = controller.getSelectedScenarioId();
   renderStats();
 }
 
 function renderScenarioJson() {
-  const selected = getSelectedScenario();
-  elements.scenarioJson.value = selected ? serializeScenario(selected.bundle) : '';
+  elements.scenarioJson.value = controller.getEditorValue();
+}
+
+function renderAll() {
+  renderScenarioList();
+  renderScenarioJson();
 }
 
 async function sendMessage(type, payload = {}) {
@@ -93,43 +211,46 @@ async function sendMessage(type, payload = {}) {
   });
 }
 
-async function refreshScenarios({ preserveSelection = true } = {}) {
-  const selectedId = preserveSelection ? state.selectedScenarioId : '';
+async function refreshScenarios(options = {}) {
   const response = await sendMessage('take5:list-scenarios');
-  state.scenarios = response.scenarios ?? [];
-  state.selectedScenarioId = state.scenarios.some((scenario) => scenario.id === selectedId)
-    ? selectedId
-    : state.scenarios[0]?.id ?? '';
-  renderScenarioList();
-  renderScenarioJson();
+  const updated = controller.refreshScenarios(response.scenarios ?? [], options);
+  if (!updated) {
+    return false;
+  }
+
+  renderAll();
+  return true;
 }
 
 async function saveScenarioFromEditor() {
   const bundle = parseScenarioJson(elements.scenarioJson.value);
   const response = await sendMessage('take5:save-scenario', bundle);
   const savedScenario = response.scenario;
+  const listResponse = await sendMessage('take5:list-scenarios');
+  controller.applySavedScenario(savedScenario, listResponse.scenarios ?? []);
+  renderAll();
   setFeedback(`Saved ${savedScenario.name}`);
-  await refreshScenarios({ preserveSelection: false });
-  state.selectedScenarioId = savedScenario.id;
-  elements.scenarioList.value = savedScenario.id;
-  renderScenarioJson();
 }
 
 async function deleteSelectedScenario() {
-  const selected = getSelectedScenario();
+  const selected = controller.getSelectedScenario();
   if (!selected) {
     setFeedback('Pick a scenario to delete first.', true);
     return;
   }
 
   await sendMessage('take5:delete-scenario', { id: selected.id });
-  setFeedback(`Deleted ${selected.name}`);
-  state.selectedScenarioId = '';
-  await refreshScenarios({ preserveSelection: false });
+  const refreshed = await refreshScenarios({
+    preserveSelection: false,
+    force: true,
+  });
+  if (refreshed) {
+    setFeedback(`Deleted ${selected.name}`);
+  }
 }
 
 async function exportSelectedScenario() {
-  const selected = getSelectedScenario();
+  const selected = controller.getSelectedScenario();
   if (!selected) {
     setFeedback('Pick a scenario to export first.', true);
     return;
@@ -154,13 +275,13 @@ async function exportSelectedScenario() {
 async function importScenarioFile(file) {
   const json = await file.text();
   elements.scenarioJson.value = json;
+  controller.setEditorValue(json);
   const bundle = parseScenarioJson(json);
   const response = await sendMessage('take5:save-scenario', bundle);
+  const listResponse = await sendMessage('take5:list-scenarios');
+  controller.applySavedScenario(response.scenario, listResponse.scenarios ?? []);
+  renderAll();
   setFeedback(`Imported ${response.scenario.name}`);
-  await refreshScenarios({ preserveSelection: false });
-  state.selectedScenarioId = response.scenario.id;
-  elements.scenarioList.value = response.scenario.id;
-  renderScenarioJson();
 }
 
 function wireActions() {
@@ -193,7 +314,11 @@ function wireActions() {
 
   document.querySelector('[data-action="scenarios"]').addEventListener('click', async () => {
     try {
-      await refreshScenarios();
+      const refreshed = await refreshScenarios();
+      if (!refreshed) {
+        setFeedback('Kept unsaved scenario JSON.', true);
+        return;
+      }
       setFeedback('Scenario list refreshed.');
     } catch (error) {
       setFeedback(error.message, true);
@@ -210,7 +335,11 @@ function wireActions() {
 
   elements.refreshButton.addEventListener('click', async () => {
     try {
-      await refreshScenarios();
+      const refreshed = await refreshScenarios();
+      if (!refreshed) {
+        setFeedback('Kept unsaved scenario JSON.', true);
+        return;
+      }
       setFeedback('Scenario list refreshed.');
     } catch (error) {
       setFeedback(error.message, true);
@@ -243,8 +372,18 @@ function wireActions() {
     }
   });
 
+  elements.scenarioJson.addEventListener('input', () => {
+    controller.setEditorValue(elements.scenarioJson.value);
+  });
+
   elements.scenarioList.addEventListener('change', () => {
-    state.selectedScenarioId = elements.scenarioList.value;
+    const changed = controller.selectScenario(elements.scenarioList.value);
+    if (!changed) {
+      elements.scenarioList.value = controller.getSelectedScenarioId();
+      setFeedback('Kept unsaved scenario JSON.', true);
+      return;
+    }
+
     renderScenarioJson();
     renderStats();
   });
@@ -254,10 +393,13 @@ async function init() {
   wireActions();
   setMode('idle');
   setFeedback('Ready.');
-  await refreshScenarios({ preserveSelection: false });
+  await refreshScenarios({
+    preserveSelection: false,
+    force: true,
+  });
 }
 
-if (typeof document !== 'undefined') {
+if (hasDocument) {
   init().catch((error) => {
     setFeedback(error.message, true);
   });

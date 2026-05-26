@@ -176,3 +176,45 @@ test('scenario store skips corrupt stored records instead of throwing', async ()
   assert.equal(listed[0].id, 'scenario-one');
   assert.equal(listed[0].name, 'Valid record');
 });
+
+test('scenario store preserves unreadable raw records across save mutations', async () => {
+  const rawUnreadableRecord = {
+    id: 'broken-record',
+    bundle: {
+      metadata: {
+        schemaVersion: 1,
+        scenarioId: 'broken-record',
+      },
+      steps: [],
+      annotations: [],
+      debug: {},
+    },
+    unreadableSentinel: true,
+  };
+  const adapter = createMemoryAdapter([
+    rawUnreadableRecord,
+    {
+      id: 'scenario-one',
+      name: 'Valid record',
+      createdAt: '2026-05-26T09:00:00.000Z',
+      updatedAt: '2026-05-26T09:05:00.000Z',
+      bundle: structuredClone(scenarioBundle),
+    },
+  ]);
+  const store = createScenarioStore(adapter, {
+    now: () => '2026-05-26T12:00:00.000Z',
+  });
+
+  await store.saveScenario({
+    ...scenarioBundle,
+    metadata: {
+      ...scenarioBundle.metadata,
+      scenarioId: 'scenario-two',
+    },
+  });
+
+  const rawStored = await adapter.readScenarios();
+  assert.equal(rawStored.length, 3);
+  assert.deepEqual(rawStored[0], rawUnreadableRecord);
+  assert.equal(rawStored.some((record) => record.id === 'scenario-two'), true);
+});

@@ -128,6 +128,23 @@ function normalizeStoredScenarioRecord(record, now) {
   }
 }
 
+function partitionStoredScenarios(records, now) {
+  const readable = [];
+  const unreadable = [];
+
+  for (const record of records) {
+    const clonedRecord = cloneValue(record);
+    const normalizedRecord = normalizeStoredScenarioRecord(clonedRecord, now);
+    if (normalizedRecord) {
+      readable.push(normalizedRecord);
+    } else {
+      unreadable.push(clonedRecord);
+    }
+  }
+
+  return { readable, unreadable };
+}
+
 function getScenarioIdFromInput(input) {
   if (isPlainObject(input?.bundle) && isNonEmptyString(input.bundle?.metadata?.scenarioId)) {
     return input.bundle.metadata.scenarioId.trim();
@@ -200,17 +217,7 @@ export function createScenarioStore(adapter = createChromeStorageAdapter(), opti
       return [];
     }
 
-    const readAt = new Date().toISOString();
-    const normalized = [];
-
-    for (const scenario of scenarios) {
-      const record = normalizeStoredScenarioRecord(cloneValue(scenario), readAt);
-      if (record) {
-        normalized.push(record);
-      }
-    }
-
-    return normalized;
+    return partitionStoredScenarios(scenarios, new Date().toISOString()).readable;
   }
 
   async function writeScenarios(scenarios) {
@@ -230,20 +237,23 @@ export function createScenarioStore(adapter = createChromeStorageAdapter(), opti
 
     async saveScenario(input) {
       return runExclusive(async () => {
-        const scenarios = await readScenarios();
+        const rawScenarios = await adapter.readScenarios();
+        const { readable, unreadable } = Array.isArray(rawScenarios)
+          ? partitionStoredScenarios(rawScenarios, new Date().toISOString())
+          : { readable: [], unreadable: [] };
         const nextNow = now();
         const scenarioId = getScenarioIdFromInput(input);
-        const index = scenarios.findIndex((scenario) => scenario.id === scenarioId);
-        const existingRecord = index >= 0 ? scenarios[index] : null;
+        const index = readable.findIndex((scenario) => scenario.id === scenarioId);
+        const existingRecord = index >= 0 ? readable[index] : null;
         const record = normalizeScenarioRecord(input, existingRecord, nextNow);
 
         if (index >= 0) {
-          scenarios[index] = record;
+          readable[index] = record;
         } else {
-          scenarios.push(record);
+          readable.push(record);
         }
 
-        await writeScenarios(scenarios);
+        await writeScenarios([...unreadable, ...readable]);
         return cloneValue(record);
       });
     },
@@ -254,14 +264,17 @@ export function createScenarioStore(adapter = createChromeStorageAdapter(), opti
           throw new Error('Scenario id must be a non-empty string');
         }
 
-        const scenarios = await readScenarios();
-        const index = scenarios.findIndex((scenario) => scenario.id === id.trim());
+        const rawScenarios = await adapter.readScenarios();
+        const { readable, unreadable } = Array.isArray(rawScenarios)
+          ? partitionStoredScenarios(rawScenarios, new Date().toISOString())
+          : { readable: [], unreadable: [] };
+        const index = readable.findIndex((scenario) => scenario.id === id.trim());
         if (index < 0) {
           return false;
         }
 
-        scenarios.splice(index, 1);
-        await writeScenarios(scenarios);
+        readable.splice(index, 1);
+        await writeScenarios([...unreadable, ...readable]);
         return true;
       });
     },
