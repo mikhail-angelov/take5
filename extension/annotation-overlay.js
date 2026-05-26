@@ -60,6 +60,7 @@ function ensureOverlayRoot(document) {
 
   const root = document.createElement('div');
   root.id = OVERLAY_ROOT_ID;
+  root.dataset.take5OverlayRoot = 'true';
   root.style.position = 'fixed';
   root.style.inset = '0';
   root.style.pointerEvents = 'none';
@@ -134,6 +135,7 @@ function createHighlightBox(document, rect, label) {
 function createPromptOverlay(document) {
   const dialog = document.createElement('div');
   dialog.className = 'take5-annotation-dialog';
+  dialog.dataset.take5Prompt = 'true';
   dialog.style.position = 'fixed';
   dialog.style.inset = '0';
   dialog.style.display = 'flex';
@@ -143,6 +145,7 @@ function createPromptOverlay(document) {
   dialog.style.pointerEvents = 'auto';
 
   const panel = document.createElement('div');
+  panel.dataset.take5PromptPanel = 'true';
   panel.style.width = '320px';
   panel.style.background = '#0f172a';
   panel.style.color = '#fff';
@@ -185,7 +188,44 @@ function createPromptOverlay(document) {
   panel.append(title, input, actions);
   dialog.appendChild(panel);
 
-  return { dialog, input, save, cancel };
+  return { dialog, panel, input, save, cancel };
+}
+
+export function createPromptInteractionController({ dialog, panel, input, save, cancel }) {
+  return new Promise((resolve) => {
+    let settled = false;
+
+    const finish = (value) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      dialog.remove();
+      resolve(isNonEmptyString(value) ? value.trim() : null);
+    };
+
+    save.addEventListener('click', () => finish(input.value));
+    cancel.addEventListener('click', () => finish(null));
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) {
+        finish(null);
+      }
+    });
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        finish(null);
+      }
+      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        finish(input.value);
+      }
+    });
+    panel.addEventListener('click', (event) => {
+      event.stopPropagation?.();
+    });
+  });
 }
 
 export function createAnnotationOverlay(document = globalThis.document) {
@@ -216,30 +256,13 @@ export function createAnnotationOverlay(document = globalThis.document) {
 
   function promptForAnnotation(target, options = {}) {
     const { defaultValue = '' } = options;
-    const { dialog, input, save, cancel } = createPromptOverlay(document);
+    const { dialog, panel, input, save, cancel } = createPromptOverlay(document);
     input.value = defaultValue;
     overlayRoot.appendChild(dialog);
     input.focus();
+    input.select?.();
 
-    return new Promise((resolve) => {
-      const finish = (value) => {
-        dialog.remove();
-        resolve(isNonEmptyString(value) ? value.trim() : null);
-      };
-
-      save.addEventListener('click', () => finish(input.value), { once: true });
-      cancel.addEventListener('click', () => finish(null), { once: true });
-      dialog.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          finish(null);
-        }
-        if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-          event.preventDefault();
-          finish(input.value);
-        }
-      });
-    });
+    return createPromptInteractionController({ dialog, panel, input, save, cancel });
   }
 
   function pinAnnotation(annotation) {

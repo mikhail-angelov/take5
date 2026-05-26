@@ -96,6 +96,11 @@ function isNavigationKey(key) {
   return ['Enter', 'Tab', 'Escape', 'Backspace', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key);
 }
 
+function isOverlayTarget(target) {
+  return typeof target?.closest === 'function'
+    && Boolean(target.closest('[data-take5-overlay-root], [data-take5-prompt], [data-take5-prompt-panel]'));
+}
+
 function createInitialBundle(options, now) {
   const startedAt = getTimestamp(now);
   const scenarioId =
@@ -223,6 +228,10 @@ export function createCaptureEngine(options = {}) {
       return;
     }
 
+    if (isOverlayTarget(event.target)) {
+      return;
+    }
+
     appendDebugEvent({ type: 'keydown', key: event.key });
 
     if (event.key === 'Control') {
@@ -244,6 +253,10 @@ export function createCaptureEngine(options = {}) {
       return;
     }
 
+    if (isOverlayTarget(event.target)) {
+      return;
+    }
+
     appendDebugEvent({ type: 'keyup', key: event.key });
 
     if (event.key === 'Control') {
@@ -258,6 +271,9 @@ export function createCaptureEngine(options = {}) {
     }
 
     const target = event.target ?? event.currentTarget ?? null;
+    if (isOverlayTarget(target)) {
+      return;
+    }
     appendDebugEvent({ type: 'click', selector: resolveElementSelector(target) });
 
     if (state.annotationMode || event.ctrlKey) {
@@ -281,6 +297,9 @@ export function createCaptureEngine(options = {}) {
     }
 
     const target = event.target ?? null;
+    if (isOverlayTarget(target)) {
+      return;
+    }
     const selector = resolveElementSelector(target);
     if (selector && isFormField(target)) {
       appendDebugEvent({ type: 'input', selector });
@@ -293,6 +312,9 @@ export function createCaptureEngine(options = {}) {
     }
 
     const target = event.target ?? null;
+    if (isOverlayTarget(target)) {
+      return;
+    }
     const selector = resolveElementSelector(target);
     if (!selector) {
       return;

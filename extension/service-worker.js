@@ -19,6 +19,18 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.action?.setBadgeText?.({ text: 'T5' });
 });
 
+chrome.action.onClicked.addListener(async (tab) => {
+  if (!tab?.id) {
+    return;
+  }
+
+  try {
+    await chrome.tabs.sendMessage(tab.id, { type: 'take5:show-toolbar' });
+  } catch {
+    // Ignore unsupported pages like chrome:// where content scripts cannot run.
+  }
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const handledTypes = new Set([
     'take5:list-scenarios',

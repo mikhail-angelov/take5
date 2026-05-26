@@ -3,9 +3,29 @@ const TOOLBAR_LAUNCHER_ID = 'take5-toolbar-launcher';
 const TOGGLE_MESSAGE_TYPE = 'take5:toolbar-toggle';
 const COMMAND_MESSAGE_TYPE = 'take5:command';
 
+export function createToolbarVisibilityController({ frame, launcher }) {
+  return {
+    show() {
+      frame.style.display = 'block';
+      launcher.style.display = 'none';
+    },
+    hide() {
+      frame.style.display = 'none';
+      launcher.style.display = 'block';
+    },
+  };
+}
+
 function injectToolbar() {
   if (document.getElementById(TOOLBAR_FRAME_ID) || document.getElementById(TOOLBAR_LAUNCHER_ID)) {
-    return;
+    return {
+      frame: document.getElementById(TOOLBAR_FRAME_ID),
+      launcher: document.getElementById(TOOLBAR_LAUNCHER_ID),
+      visibility: createToolbarVisibilityController({
+        frame: document.getElementById(TOOLBAR_FRAME_ID),
+        launcher: document.getElementById(TOOLBAR_LAUNCHER_ID),
+      }),
+    };
   }
 
   const launcher = document.createElement('button');
@@ -43,10 +63,10 @@ function injectToolbar() {
   frame.style.boxShadow = '0 18px 50px rgba(15, 23, 42, 0.28)';
   frame.style.borderRadius = '18px';
   frame.style.overflow = 'hidden';
+  const visibility = createToolbarVisibilityController({ frame, launcher });
 
   launcher.addEventListener('click', () => {
-    frame.style.display = 'block';
-    launcher.style.display = 'none';
+    visibility.show();
   });
 
   window.addEventListener('message', (event) => {
@@ -54,13 +74,13 @@ function injectToolbar() {
       return;
     }
 
-    frame.style.display = 'none';
-    launcher.style.display = 'block';
+    visibility.hide();
   });
 
   const root = document.body || document.documentElement;
   root.appendChild(launcher);
   root.appendChild(frame);
+  return { frame, launcher, visibility };
 }
 
 function getToolbarFrame() {
@@ -85,7 +105,7 @@ function postStatus(mode, message) {
 }
 
 async function bootstrap() {
-  injectToolbar();
+  const toolbar = injectToolbar();
 
   const [{ createAnnotationOverlay }, { createCaptureEngine }, { createReplayEngine }] = await Promise.all([
     import(chrome.runtime.getURL('annotation-overlay.js')),
@@ -236,9 +256,21 @@ async function bootstrap() {
     }
   });
 
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message?.type !== 'take5:show-toolbar') {
+      return false;
+    }
+
+    toolbar?.visibility?.show();
+    sendResponse({ ok: true });
+    return true;
+  });
+
   postStatus('idle', 'Ready.');
 }
 
-bootstrap().catch((error) => {
-  postStatus('idle', error.message);
-});
+if (typeof document !== 'undefined' && globalThis.chrome?.runtime) {
+  bootstrap().catch((error) => {
+    postStatus('idle', error.message);
+  });
+}
