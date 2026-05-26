@@ -3,7 +3,7 @@ const TOOLBAR_LAUNCHER_ID = 'take5-toolbar-launcher';
 const TOGGLE_MESSAGE_TYPE = 'take5:toolbar-toggle';
 const COMMAND_MESSAGE_TYPE = 'take5:command';
 
-export function createToolbarVisibilityController({ frame, launcher }) {
+function createToolbarVisibilityController({ frame, launcher }) {
   return {
     show() {
       frame.style.display = 'block';

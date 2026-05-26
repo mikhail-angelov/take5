@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createToolbarVisibilityController } from './content-script.js';
+import { createToolbarVisibilityController } from './toolbar-visibility.js';
 
 function createNode() {
   return {
