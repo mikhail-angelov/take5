@@ -1,6 +1,8 @@
 import { createScenarioStore } from './scenario-store.js';
+import { createOpenOnLoadState } from './open-on-load-state.js';
 
 const store = createScenarioStore();
+const openOnLoadState = createOpenOnLoadState();
 
 async function handleMessage(message) {
   switch (message?.type) {
@@ -25,7 +27,11 @@ chrome.action.onClicked.addListener(async (tab) => {
   }
 
   try {
-    await chrome.tabs.sendMessage(tab.id, { type: 'take5:show-toolbar' });
+    if (!openOnLoadState.requestOpenOnNextLoad(tab.id)) {
+      return;
+    }
+
+    await chrome.tabs.reload(tab.id);
   } catch {
     // Ignore unsupported pages like chrome:// where content scripts cannot run.
   }
@@ -36,9 +42,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     'take5:list-scenarios',
     'take5:save-scenario',
     'take5:delete-scenario',
+    'take5:content-script-ready',
   ]);
 
   if (!handledTypes.has(message?.type)) {
+    return false;
+  }
+
+  if (message?.type === 'take5:content-script-ready') {
+    sendResponse({
+      ok: true,
+      showToolbar: openOnLoadState.consumePendingOpen(sender.tab?.id ?? null),
+    });
     return false;
   }
 

@@ -104,6 +104,20 @@ function postStatus(mode, message) {
   });
 }
 
+function sendRuntimeMessage(message) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(message, (response) => {
+      const error = chrome.runtime.lastError;
+      if (error) {
+        reject(new Error(error.message));
+        return;
+      }
+
+      resolve(response ?? null);
+    });
+  });
+}
+
 async function bootstrap() {
   const toolbar = injectToolbar();
 
@@ -265,6 +279,15 @@ async function bootstrap() {
     sendResponse({ ok: true });
     return true;
   });
+
+  try {
+    const response = await sendRuntimeMessage({ type: 'take5:content-script-ready' });
+    if (response?.ok && response.showToolbar) {
+      toolbar?.visibility?.show();
+    }
+  } catch {
+    // Ignore unsupported pages or transient runtime reload races.
+  }
 
   postStatus('idle', 'Ready.');
 }
