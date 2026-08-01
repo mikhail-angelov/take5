@@ -112,7 +112,10 @@ function normalizeStoredScenarioRecord(record, now) {
     const bundle = normalizeScenarioBundle(record);
     const scenarioId = bundle.metadata.scenarioId;
     const createdAt = normalizeTimestamp(record.createdAt ?? bundle.metadata.createdAt, now);
-    const updatedAt = normalizeTimestamp(record.updatedAt ?? record.createdAt ?? bundle.metadata.updatedAt, createdAt);
+    const updatedAt = normalizeTimestamp(
+      record.updatedAt ?? record.createdAt ?? bundle.metadata.updatedAt,
+      createdAt,
+    );
 
     return {
       id: scenarioId,

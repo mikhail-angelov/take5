@@ -33,7 +33,7 @@ export function parseScenarioJson(jsonText) {
   try {
     parsed = JSON.parse(source);
   } catch (error) {
-    throw new Error(`Scenario JSON is not valid JSON: ${error.message}`);
+    throw new Error(`Scenario JSON is not valid JSON: ${error.message}`, { cause: error });
   }
 
   return validateCaptureBundle(parsed);
@@ -42,6 +42,8 @@ export function parseScenarioJson(jsonText) {
 function sanitizeFilenamePart(value) {
   const raw = isNonEmptyString(value) ? value.trim() : 'scenario';
   const sanitized = raw
+    // Strip filesystem-hostile characters, including control chars, from filenames.
+    // eslint-disable-next-line no-control-regex
     .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ')
     .replace(/[^A-Za-z0-9._ -]+/g, ' ')
     .replace(/[-\s]+/g, ' ')

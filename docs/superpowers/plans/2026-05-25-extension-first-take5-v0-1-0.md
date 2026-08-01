@@ -75,6 +75,7 @@
 ### Task 1: Replace the CLI entrypoint with a `run` pipeline shell
 
 **Files:**
+
 - Create: `src/commands/run.js`
 - Create: `src/errors.js`
 - Create: `src/logger.js`
@@ -108,10 +109,7 @@ test('parseCliArgs accepts run command with output flags', () => {
 });
 
 test('parseCliArgs rejects missing capture file for run', () => {
-  assert.throws(
-    () => parseCliArgs(['run']),
-    /run command requires a capture file/,
-  );
+  assert.throws(() => parseCliArgs(['run']), /run command requires a capture file/);
 });
 ```
 
@@ -202,12 +200,7 @@ export async function runCommand({ captureFile, outDir, debug, cutDelays }) {
   "bin": {
     "take5": "./src/cli.js"
   },
-  "files": [
-    "src/",
-    "extension/",
-    "fixtures/",
-    "README.md"
-  ],
+  "files": ["src/", "extension/", "fixtures/", "README.md"],
   "scripts": {
     "start": "node src/cli.js run fixtures/sample-capture.json",
     "test": "node --test",
@@ -231,6 +224,7 @@ git commit -m "feat: add extension-first run command shell"
 ### Task 2: Define the capture bundle schema and import pipeline
 
 **Files:**
+
 - Create: `src/capture-schema.js`
 - Create: `src/capture-loader.js`
 - Create: `fixtures/sample-capture.json`
@@ -258,12 +252,13 @@ test('validateCaptureBundle accepts semantic steps plus annotations', () => {
 
 test('validateCaptureBundle rejects unknown step types', () => {
   assert.throws(
-    () => validateCaptureBundle({
-      metadata: { schemaVersion: '1', scenarioId: 'demo-1', baseUrl: 'https://example.com' },
-      steps: [{ id: 'step-1', type: 'drag_and_pray' }],
-      annotations: [],
-      debug: { rawEvents: [] },
-    }),
+    () =>
+      validateCaptureBundle({
+        metadata: { schemaVersion: '1', scenarioId: 'demo-1', baseUrl: 'https://example.com' },
+        steps: [{ id: 'step-1', type: 'drag_and_pray' }],
+        annotations: [],
+        debug: { rawEvents: [] },
+      }),
     /Unsupported step type: drag_and_pray/,
   );
 });
@@ -296,7 +291,8 @@ export function validateCaptureBundle(bundle) {
   const { metadata, steps, annotations, debug } = bundle;
   if (!metadata?.schemaVersion) throw new Error('Capture metadata.schemaVersion is required');
   if (!metadata?.scenarioId) throw new Error('Capture metadata.scenarioId is required');
-  if (!Array.isArray(steps) || steps.length === 0) throw new Error('Capture must contain at least one step');
+  if (!Array.isArray(steps) || steps.length === 0)
+    throw new Error('Capture must contain at least one step');
   if (!Array.isArray(annotations)) throw new Error('Capture annotations must be an array');
   if (!debug || typeof debug !== 'object') throw new Error('Capture debug section is required');
 
@@ -362,6 +358,7 @@ git commit -m "feat: add capture bundle schema and loader"
 ### Task 3: Generate normalized replay plans and artifact directories
 
 **Files:**
+
 - Create: `src/plan-generator.js`
 - Create: `src/artifact-writer.js`
 - Create: `src/plan-generator.test.js`
@@ -474,6 +471,7 @@ git commit -m "feat: add replay plan generation and artifact directories"
 ### Task 4: Build the extension shell, scenario store, and JSON import/export
 
 **Files:**
+
 - Create: `extension/manifest.json`
 - Create: `extension/service-worker.js`
 - Create: `extension/toolbar.html`
@@ -498,7 +496,12 @@ test('scenario store saves and lists scenarios', async () => {
     set: async (key, value) => memory.set(key, value),
   });
 
-  await store.saveScenario({ metadata: { scenarioId: 'demo-1', name: 'Demo 1' }, steps: [], annotations: [], debug: { rawEvents: [] } });
+  await store.saveScenario({
+    metadata: { scenarioId: 'demo-1', name: 'Demo 1' },
+    steps: [],
+    annotations: [],
+    debug: { rawEvents: [] },
+  });
   const scenarios = await store.listScenarios();
 
   assert.equal(scenarios.length, 1);
@@ -553,7 +556,9 @@ export function createScenarioStore(storageApi = chrome.storage.local) {
     },
     async saveScenario(bundle) {
       const existing = await this.listScenarios();
-      const next = existing.filter((item) => item.metadata.scenarioId !== bundle.metadata.scenarioId);
+      const next = existing.filter(
+        (item) => item.metadata.scenarioId !== bundle.metadata.scenarioId,
+      );
       next.push(bundle);
       await storageApi.set({ [STORAGE_KEY]: next });
     },
@@ -594,6 +599,7 @@ git commit -m "feat: add extension shell and scenario storage"
 ### Task 5: Implement capture semantics, `Ctrl` annotations, and extension replay
 
 **Files:**
+
 - Create: `extension/content-script.js`
 - Create: `extension/capture-engine.js`
 - Create: `extension/annotation-overlay.js`
@@ -692,13 +698,17 @@ export function installAnnotationOverlay({ onSave }) {
     if (event.key === 'Control') annotationMode = false;
   });
 
-  document.addEventListener('click', (event) => {
-    if (!annotationMode) return;
-    event.preventDefault();
-    event.stopPropagation();
-    const target = event.target;
-    openAnnotationPopover(target, (text) => onSave({ target, text }));
-  }, true);
+  document.addEventListener(
+    'click',
+    (event) => {
+      if (!annotationMode) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const target = event.target;
+      openAnnotationPopover(target, (text) => onSave({ target, text }));
+    },
+    true,
+  );
 }
 ```
 
@@ -760,6 +770,7 @@ git commit -m "feat: add extension capture, annotations, and replay"
 ### Task 6: Replace agent-driven browser execution with a replay runner
 
 **Files:**
+
 - Create: `src/replay-runner.js`
 - Create: `src/runner-annotator.js`
 - Modify: `src/browser.js`
@@ -778,7 +789,9 @@ test('executeReplayPlan records step results in order', async () => {
   const calls = [];
   const browser = {
     async launch() {},
-    async close() { return { webmPath: 'take5-output/demo.webm' }; },
+    async close() {
+      return { webmPath: 'take5-output/demo.webm' };
+    },
     async executeStep(step) {
       calls.push(step.type);
       return { ok: true, stepId: step.id };
@@ -877,6 +890,7 @@ git commit -m "feat: add playwright replay runner"
 ### Task 7: Save failure artifacts, screenshots, console/network errors, and polished video outputs
 
 **Files:**
+
 - Modify: `src/browser.js`
 - Modify: `src/converter.js`
 - Modify: `src/artifact-writer.js`
@@ -955,8 +969,18 @@ export function summarizeRun({ stepResults, closeResult }) {
 - [ ] **Step 5: Extend video conversion to write `.mp4` and preserve `.webm`**
 
 ```js
-export async function finalizeVideoArtifacts({ webmPath, cutDelays, actionSegments, recordingStartTime }) {
-  const mp4Path = await convertToMp4(webmPath, 0, cutDelays ? actionSegments : null, recordingStartTime);
+export async function finalizeVideoArtifacts({
+  webmPath,
+  cutDelays,
+  actionSegments,
+  recordingStartTime,
+}) {
+  const mp4Path = await convertToMp4(
+    webmPath,
+    0,
+    cutDelays ? actionSegments : null,
+    recordingStartTime,
+  );
   return {
     webmPath,
     mp4Path,
@@ -979,6 +1003,7 @@ git commit -m "feat: add replay failure artifacts and video outputs"
 ### Task 8: Add README quickstart, smoke tests, CI, and publish setup
 
 **Files:**
+
 - Modify: `README.md`
 - Create: `extension/README.md`
 - Create: `scripts/smoke-run.js`
@@ -994,9 +1019,13 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 
 test('CLI smoke run writes plan artifact for sample capture', () => {
-  const result = spawnSync('node', ['src/cli.js', 'run', 'fixtures/sample-capture.json', '--out', '.tmp/smoke'], {
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['src/cli.js', 'run', 'fixtures/sample-capture.json', '--out', '.tmp/smoke'],
+    {
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /plan\.json/);
@@ -1010,7 +1039,7 @@ Expected: FAIL until the end-to-end CLI path is complete
 
 - [ ] **Step 3: Update the README for extension-first usage**
 
-```md
+````md
 ## Quickstart
 
 1. Load the unpacked extension from `extension/` in Chrome.
@@ -1021,8 +1050,10 @@ Expected: FAIL until the end-to-end CLI path is complete
 ```bash
 npx take5 run ./my-scenario.json --out ./take5-output
 ```
+````
 
 Artifacts:
+
 - `capture.json`
 - `plan.json`
 - `step-log.json`
@@ -1030,7 +1061,8 @@ Artifacts:
 - `summary.json`
 - `video.webm`
 - `video.mp4` when ffmpeg is available
-```
+
+````
 
 - [ ] **Step 4: Add CI and publish workflows**
 
@@ -1047,7 +1079,7 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: node --test
-```
+````
 
 ```yaml
 name: publish

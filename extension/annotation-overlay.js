@@ -270,7 +270,8 @@ export function createAnnotationOverlay(document = globalThis.document) {
     const rect = resolveTargetRect(document, annotation, selector);
     const marker = createMarkerElement(document, annotation, rect);
     marker.dataset.take5Overlay = 'true';
-    marker.dataset.take5AnnotationId = annotation.orderIndex != null ? String(annotation.orderIndex) : '';
+    marker.dataset.take5AnnotationId =
+      annotation.orderIndex != null ? String(annotation.orderIndex) : '';
     overlayRoot.appendChild(marker);
     return marker;
   }
@@ -288,8 +289,15 @@ export function createAnnotationOverlay(document = globalThis.document) {
       return null;
     }
 
-    const selector = isNonEmptyString(step.selector) ? step.selector : isNonEmptyString(step.ref) ? step.ref : null;
-    const target = selector && typeof document.querySelector === 'function' ? document.querySelector(selector) : null;
+    const selector = isNonEmptyString(step.selector)
+      ? step.selector
+      : isNonEmptyString(step.ref)
+        ? step.ref
+        : null;
+    const target =
+      selector && typeof document.querySelector === 'function'
+        ? document.querySelector(selector)
+        : null;
     const rect = target && isElementLike(target) ? target.getBoundingClientRect() : null;
     if (!rect) {
       return null;

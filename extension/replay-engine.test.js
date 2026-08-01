@@ -60,7 +60,16 @@ test('createReplayEngine auto plays semantic steps in order', async () => {
   assert.equal(engine.getState().index, 3);
   assert.deepEqual(
     overlay.calls.map((call) => call[0]),
-    ['clear', 'setReplayMode', 'showAnnotations', 'setReplayMode', 'showStep', 'showStep', 'showStep', 'setReplayMode'],
+    [
+      'clear',
+      'setReplayMode',
+      'showAnnotations',
+      'setReplayMode',
+      'showStep',
+      'showStep',
+      'showStep',
+      'setReplayMode',
+    ],
   );
 });
 

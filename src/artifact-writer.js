@@ -2,11 +2,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 function slugify(value) {
-  return String(value)
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'run';
+  return (
+    String(value)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'run'
+  );
 }
 
 export async function createRunDirectory(outDir, scenarioId) {

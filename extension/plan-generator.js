@@ -169,8 +169,7 @@ export function createReplayPlan(bundle) {
     version: bundle.metadata.schemaVersion,
     scenarioId: bundle.metadata.scenarioId,
     baseUrl: normalizeStringField(bundle.metadata.baseUrl) || null,
-    viewportPreset:
-      normalizeStringField(bundle.metadata.viewportPreset) || DEFAULT_VIEWPORT_PRESET,
+    viewportPreset: normalizeStringField(bundle.metadata.viewportPreset) || DEFAULT_VIEWPORT_PRESET,
     annotations,
     steps,
   };

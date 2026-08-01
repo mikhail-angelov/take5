@@ -13,7 +13,8 @@ async function loadManifest() {
 
 test('manifest exposes content-script runtime modules as web-accessible resources', async () => {
   const manifest = await loadManifest();
-  const resources = manifest.web_accessible_resources?.flatMap((entry) => entry.resources ?? []) ?? [];
+  const resources =
+    manifest.web_accessible_resources?.flatMap((entry) => entry.resources ?? []) ?? [];
 
   assert.deepEqual(
     resources.filter((resource) =>

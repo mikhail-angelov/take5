@@ -29,15 +29,18 @@ test('loadCaptureBundle rejects invalid JSON payloads through validation', async
   const captureDir = await fs.mkdtemp(path.join(os.tmpdir(), 'take5-capture-'));
   const capturePath = path.join(captureDir, `invalid-${randomUUID()}.json`);
 
-  await fs.writeFile(capturePath, JSON.stringify({
-    metadata: {
-      schemaVersion: 1,
-      scenarioId: 'invalid-capture',
-    },
-    steps: [{ type: 'drag_and_pray' }],
-    annotations: [],
-    debug: {},
-  }));
+  await fs.writeFile(
+    capturePath,
+    JSON.stringify({
+      metadata: {
+        schemaVersion: 1,
+        scenarioId: 'invalid-capture',
+      },
+      steps: [{ type: 'drag_and_pray' }],
+      annotations: [],
+      debug: {},
+    }),
+  );
 
   try {
     await assert.rejects(loadCaptureBundle(capturePath), /Unsupported step type: drag_and_pray/);

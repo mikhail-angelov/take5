@@ -1,4 +1,8 @@
-import { buildScenarioExportFilename, parseScenarioJson, serializeScenario } from './schema-export.js';
+import {
+  buildScenarioExportFilename,
+  parseScenarioJson,
+  serializeScenario,
+} from './schema-export.js';
 
 const TOGGLE_MESSAGE_TYPE = 'take5:toolbar-toggle';
 const COMMAND_MESSAGE_TYPE = 'take5:command';
@@ -60,9 +64,7 @@ export function createToolbarController(options = {}) {
       return true;
     }
 
-    return confirmDiscardChanges(
-      `Discard unsaved scenario JSON before ${reason}?`,
-    );
+    return confirmDiscardChanges(`Discard unsaved scenario JSON before ${reason}?`);
   }
 
   function applyScenarioSelection(nextScenarioId, options = {}) {
@@ -121,7 +123,7 @@ export function createToolbarController(options = {}) {
       state.scenarios = structuredClone(nextScenarios);
       state.selectedScenarioId = state.scenarios.some((scenario) => scenario.id === selectedId)
         ? selectedId
-        : state.scenarios[0]?.id ?? '';
+        : (state.scenarios[0]?.id ?? '');
       replaceEditorFromSelection();
       return true;
     },

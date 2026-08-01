@@ -257,7 +257,9 @@ test('validateCaptureBundle validates annotation entries', () => {
     () =>
       validateCaptureBundle({
         ...validBundle,
-        annotations: [{ description: 'Check this', selector: '#target', targetRect: { x: 1, y: 2, width: 3 } }],
+        annotations: [
+          { description: 'Check this', selector: '#target', targetRect: { x: 1, y: 2, width: 3 } },
+        ],
       }),
     /annotations require a valid targetRect/,
   );
@@ -266,7 +268,9 @@ test('validateCaptureBundle validates annotation entries', () => {
     () =>
       validateCaptureBundle({
         ...validBundle,
-        annotations: [{ description: 'Check this', targetRect: { x: 1, y: 2, width: 0, height: 10 } }],
+        annotations: [
+          { description: 'Check this', targetRect: { x: 1, y: 2, width: 0, height: 10 } },
+        ],
       }),
     /annotations require a valid targetRect/,
   );

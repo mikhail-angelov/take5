@@ -68,7 +68,11 @@ function validateStep(step) {
       }
       break;
     case 'scroll':
-      if (!SUPPORTED_SCROLL_DIRECTIONS.has(step.direction) || !isFiniteNumber(step.amount) || step.amount <= 0) {
+      if (
+        !SUPPORTED_SCROLL_DIRECTIONS.has(step.direction) ||
+        !isFiniteNumber(step.amount) ||
+        step.amount <= 0
+      ) {
         throw new Error('scroll step requires direction up/down and a positive amount');
       }
       break;

@@ -10,7 +10,13 @@ import { parseCliArgs } from './cli.js';
 import { CliUsageError } from './errors.js';
 
 test('parseCliArgs parses the run command shell options', () => {
-  const result = parseCliArgs(['run', 'fixtures/sample-capture.json', '--out', './take5-output', '--debug']);
+  const result = parseCliArgs([
+    'run',
+    'fixtures/sample-capture.json',
+    '--out',
+    './take5-output',
+    '--debug',
+  ]);
 
   assert.deepEqual(result, {
     command: 'run',
@@ -38,11 +44,17 @@ test('parseCliArgs accepts default run without explicit command', () => {
 });
 
 test('parseCliArgs rejects unknown flags with CliUsageError', () => {
-  assert.throws(() => parseCliArgs(['run', 'fixtures/sample-capture.json', '--nope']), CliUsageError);
+  assert.throws(
+    () => parseCliArgs(['run', 'fixtures/sample-capture.json', '--nope']),
+    CliUsageError,
+  );
 });
 
 test('parseCliArgs rejects malformed --out', () => {
-  assert.throws(() => parseCliArgs(['run', 'fixtures/sample-capture.json', '--out']), /--out flag requires a directory/);
+  assert.throws(
+    () => parseCliArgs(['run', 'fixtures/sample-capture.json', '--out']),
+    /--out flag requires a directory/,
+  );
 });
 
 test('cli smoke path fails for missing capture file', async () => {
@@ -56,7 +68,7 @@ test('cli smoke path fails for missing capture file', async () => {
   });
 
   assert.notEqual(result.status, 0);
-  assert.match((result.stderr || result.stdout), /Capture file is not readable:/);
+  assert.match(result.stderr || result.stdout, /Capture file is not readable:/);
 });
 
 test('cli run path wraps malformed capture errors without raw stacks', async () => {

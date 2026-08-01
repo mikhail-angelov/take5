@@ -11,7 +11,8 @@ function asCliOperationError(prefix, error) {
     return error;
   }
 
-  const detail = error instanceof Error && typeof error.message === 'string' ? error.message : String(error);
+  const detail =
+    error instanceof Error && typeof error.message === 'string' ? error.message : String(error);
   return new CliOperationError(`${prefix}: ${detail}`);
 }
 

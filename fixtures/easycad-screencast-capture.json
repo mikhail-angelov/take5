@@ -1,0 +1,140 @@
+{
+  "metadata": {
+    "schemaVersion": 1,
+    "scenarioId": "easycad-product-tour",
+    "name": "EasyCAD 82-second product tour",
+    "baseUrl": "https://text2part.bconf.com",
+    "viewportPreset": "desktop-1280"
+  },
+  "steps": [
+    {
+      "id": "open-app",
+      "type": "navigate",
+      "url": "https://text2part.bconf.com/app"
+    },
+    {
+      "id": "describe-base",
+      "type": "fill",
+      "selector": "textarea",
+      "value": "Create a 100 by 60 millimeter plate, 5 millimeters thick, with four holes near the corners."
+    },
+    {
+      "id": "generate-base",
+      "type": "keypress",
+      "key": "Enter"
+    },
+    {
+      "id": "wait-for-base",
+      "type": "wait",
+      "ms": 5000
+    },
+    {
+      "id": "add-center-hole",
+      "type": "fill",
+      "selector": "textarea",
+      "value": "Add a 12 millimeter hole in the center."
+    },
+    {
+      "id": "submit-center-hole",
+      "type": "keypress",
+      "key": "Enter"
+    },
+    {
+      "id": "wait-for-center-hole",
+      "type": "wait",
+      "ms": 4000
+    },
+    {
+      "id": "round-corners",
+      "type": "fill",
+      "selector": "textarea",
+      "value": "Round the outer corners with a 4 millimeter radius."
+    },
+    {
+      "id": "submit-round-corners",
+      "type": "keypress",
+      "key": "Enter"
+    },
+    {
+      "id": "wait-for-round-corners",
+      "type": "wait",
+      "ms": 4000
+    },
+    {
+      "id": "add-chamfer",
+      "type": "fill",
+      "selector": "textarea",
+      "value": "Add a chamfer to the top edge."
+    },
+    {
+      "id": "submit-chamfer",
+      "type": "keypress",
+      "key": "Enter"
+    },
+    {
+      "id": "wait-for-chamfer",
+      "type": "wait",
+      "ms": 4000
+    },
+    {
+      "id": "open-code",
+      "type": "click",
+      "selector": "button:has-text('Code')"
+    },
+    {
+      "id": "edit-code",
+      "type": "click",
+      "selector": ".monaco-editor"
+    },
+    {
+      "id": "run-code",
+      "type": "click",
+      "selector": "button:has-text('Run')"
+    },
+    {
+      "id": "wait-for-run",
+      "type": "wait",
+      "ms": 3000
+    },
+    {
+      "id": "select-earlier-version",
+      "type": "click",
+      "selector": "[data-testid='timeline'] button:nth-of-type(2)"
+    },
+    {
+      "id": "export-stl",
+      "type": "click",
+      "selector": "button:has-text('Export STL')"
+    }
+  ],
+  "annotations": [
+    {
+      "description": "Start from a plain-language description.",
+      "selector": "textarea",
+      "stepId": "describe-base"
+    },
+    {
+      "description": "EasyCAD generates parametric CadQuery and a 3D preview.",
+      "selector": "canvas",
+      "stepId": "wait-for-base"
+    },
+    {
+      "description": "Build one feature at a time; each change is retained in the timeline.",
+      "selector": "[data-testid='timeline']",
+      "stepId": "add-chamfer"
+    },
+    {
+      "description": "Direct CadQuery editing stays available when precision matters.",
+      "selector": ".monaco-editor",
+      "stepId": "edit-code"
+    },
+    {
+      "description": "Export the finished model as an STL for slicing and printing.",
+      "selector": "button:has-text('Export STL')",
+      "stepId": "export-stl"
+    }
+  ],
+  "debug": {
+    "notes": "Selectors are draft replay anchors and must be captured from an authenticated app session before rendering. The current CLI only creates replay artifacts; it does not yet execute or record this bundle."
+  }
+}

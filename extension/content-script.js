@@ -121,11 +121,12 @@ function sendRuntimeMessage(message) {
 async function bootstrap() {
   const toolbar = injectToolbar();
 
-  const [{ createAnnotationOverlay }, { createCaptureEngine }, { createReplayEngine }] = await Promise.all([
-    import(chrome.runtime.getURL('annotation-overlay.js')),
-    import(chrome.runtime.getURL('capture-engine.js')),
-    import(chrome.runtime.getURL('replay-engine.js')),
-  ]);
+  const [{ createAnnotationOverlay }, { createCaptureEngine }, { createReplayEngine }] =
+    await Promise.all([
+      import(chrome.runtime.getURL('annotation-overlay.js')),
+      import(chrome.runtime.getURL('capture-engine.js')),
+      import(chrome.runtime.getURL('replay-engine.js')),
+    ]);
 
   const overlay = createAnnotationOverlay(document);
   const captureEngine = createCaptureEngine({
@@ -165,7 +166,9 @@ async function bootstrap() {
           }
           break;
         case 'keypress':
-          document.activeElement?.dispatchEvent?.(new KeyboardEvent('keydown', { key: step.key, bubbles: true }));
+          document.activeElement?.dispatchEvent?.(
+            new KeyboardEvent('keydown', { key: step.key, bubbles: true }),
+          );
           break;
         case 'scroll':
           window.scrollBy?.(0, step.direction === 'down' ? step.amount : -step.amount);

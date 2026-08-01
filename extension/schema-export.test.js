@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildScenarioExportFilename, parseScenarioJson, serializeScenario } from './schema-export.js';
+import {
+  buildScenarioExportFilename,
+  parseScenarioJson,
+  serializeScenario,
+} from './schema-export.js';
 
 const bundle = {
   metadata: {

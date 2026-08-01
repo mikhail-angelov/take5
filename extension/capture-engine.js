@@ -1,9 +1,5 @@
 import { validateCaptureBundle } from './capture-schema.js';
 
-function isPlainObject(value) {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 function isNonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
 }
@@ -93,12 +89,25 @@ function isSelectField(target) {
 }
 
 function isNavigationKey(key) {
-  return ['Enter', 'Tab', 'Escape', 'Backspace', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key);
+  return [
+    'Enter',
+    'Tab',
+    'Escape',
+    'Backspace',
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+  ].includes(key);
 }
 
 function isOverlayTarget(target) {
-  return typeof target?.closest === 'function'
-    && Boolean(target.closest('[data-take5-overlay-root], [data-take5-prompt], [data-take5-prompt-panel]'));
+  return (
+    typeof target?.closest === 'function' &&
+    Boolean(
+      target.closest('[data-take5-overlay-root], [data-take5-prompt], [data-take5-prompt-panel]'),
+    )
+  );
 }
 
 function createInitialBundle(options, now) {
@@ -133,7 +142,8 @@ export function createCaptureEngine(options = {}) {
   const windowObject = options.window ?? globalThis.window;
   const overlay = options.overlay;
   const now = options.now ?? (() => new Date().toISOString());
-  const promptForAnnotation = options.promptForAnnotation ?? overlay?.promptForAnnotation?.bind(overlay);
+  const promptForAnnotation =
+    options.promptForAnnotation ?? overlay?.promptForAnnotation?.bind(overlay);
   const listeners = [];
 
   const state = {
@@ -185,7 +195,11 @@ export function createCaptureEngine(options = {}) {
     const selector = resolveElementSelector(target);
     const annotation = {
       description: description.trim(),
-      pageUrl: windowObject?.location?.href ?? document?.location?.href ?? state.bundle.metadata.baseUrl ?? '',
+      pageUrl:
+        windowObject?.location?.href ??
+        document?.location?.href ??
+        state.bundle.metadata.baseUrl ??
+        '',
       createdAt: getTimestamp(now),
       orderIndex: state.bundle.annotations.length,
       stepIndex: Math.max(0, state.bundle.steps.length - 1),
@@ -442,7 +456,11 @@ export function createCaptureEngine(options = {}) {
 
     const startedNavigate = {
       type: 'navigate',
-      url: state.bundle.metadata.baseUrl ?? windowObject?.location?.href ?? document?.location?.href ?? '',
+      url:
+        state.bundle.metadata.baseUrl ??
+        windowObject?.location?.href ??
+        document?.location?.href ??
+        '',
     };
     recordStep(startedNavigate);
     appendDebugEvent({ type: 'capture-start' });

@@ -79,10 +79,7 @@ test('scenario store lists, saves, and deletes scenarios', async () => {
 });
 
 test('scenario store preserves createdAt when updating an existing scenario', async () => {
-  const times = [
-    '2026-05-26T10:00:00.000Z',
-    '2026-05-26T11:00:00.000Z',
-  ];
+  const times = ['2026-05-26T10:00:00.000Z', '2026-05-26T11:00:00.000Z'];
   const store = createScenarioStore(createMemoryAdapter(), {
     now: () => times.shift(),
   });
@@ -216,5 +213,8 @@ test('scenario store preserves unreadable raw records across save mutations', as
   const rawStored = await adapter.readScenarios();
   assert.equal(rawStored.length, 3);
   assert.deepEqual(rawStored[0], rawUnreadableRecord);
-  assert.equal(rawStored.some((record) => record.id === 'scenario-two'), true);
+  assert.equal(
+    rawStored.some((record) => record.id === 'scenario-two'),
+    true,
+  );
 });
