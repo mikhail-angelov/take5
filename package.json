@@ -24,7 +24,8 @@
     "test": "node --test",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "t":" node src/cli.js run ~/Downloads/take5-capture-2026-08-04T17-38-51-048Z-97c958.json --out ./take5-output --render --cut-delays"
   },
   "engines": {
     "node": ">=20.6.0"
@@ -35,5 +36,9 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.8.0",
     "prettier": "^3.9.6"
+  },
+  "dependencies": {
+    "playwright": "^1.62.1",
+    "playwright-recast": "^0.19.2"
   }
 }

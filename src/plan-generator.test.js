@@ -96,3 +96,48 @@ test('createReplayPlan preserves linked and unlinked annotations in stable place
     ],
   });
 });
+
+test('createReplayPlan preserves exact v2 viewport and timed pointer drags', () => {
+  const plan = createReplayPlan({
+    metadata: {
+      schemaVersion: 2,
+      scenarioId: 'rotate-model',
+      viewportPreset: 'desktop-1280',
+      viewport: { width: 1536, height: 864 },
+    },
+    steps: [
+      {
+        type: 'pointer_drag',
+        selector: '#viewer',
+        points: [
+          { x: 100, y: 200, t: 0 },
+          { x: 140, y: 220, t: 30 },
+        ],
+      },
+    ],
+    annotations: [],
+    debug: {},
+  });
+
+  assert.deepEqual(plan.viewport, { width: 1536, height: 864 });
+  assert.deepEqual(plan.steps[0], {
+    id: 'step-1',
+    type: 'pointer_drag',
+    selector: '#viewer',
+    points: [
+      { x: 100, y: 200, t: 0 },
+      { x: 140, y: 220, t: 30 },
+    ],
+    annotations: [],
+  });
+});
+
+test('createReplayPlan preserves an optional fill typing delay', () => {
+  const plan = createReplayPlan({
+    metadata: { schemaVersion: 1, scenarioId: 'typed-prompt' },
+    steps: [{ type: 'fill', selector: '#prompt', value: 'Create a plate', typingDelayMs: 12 }],
+    annotations: [],
+    debug: {},
+  });
+  assert.equal(plan.steps[0].typingDelayMs, 12);
+});

@@ -1,10 +1,22 @@
 import { createScenarioStore } from './scenario-store.js';
-import { createOpenOnLoadState } from './open-on-load-state.js';
+import { createToolbarVisibilityState } from './toolbar-visibility-state.js';
+import { createCaptureSessionStore } from './capture-session-store.js';
 
 const store = createScenarioStore();
-const openOnLoadState = createOpenOnLoadState();
+const toolbarVisibility = createToolbarVisibilityState();
+const captureSessions = createCaptureSessionStore();
 
-async function handleMessage(message) {
+function log(...args) {
+  try {
+    console.log('[Take5:sw]', ...args);
+  } catch {
+    // console may be unavailable in some contexts.
+  }
+}
+
+async function handleMessage(message, sender) {
+  const tabId = sender?.tab?.id ?? null;
+
   switch (message?.type) {
     case 'take5:list-scenarios':
       return { scenarios: await store.listScenarios() };
@@ -12,6 +24,25 @@ async function handleMessage(message) {
       return { scenario: await store.saveScenario(message.payload) };
     case 'take5:delete-scenario':
       return { deleted: await store.deleteScenario(message.payload?.id) };
+    case 'take5:toolbar-visibility':
+      toolbarVisibility.setVisible(tabId, Boolean(message.payload?.visible));
+      return { visible: toolbarVisibility.isVisible(tabId) };
+    case 'take5:capture-sync': {
+      const capturing = Boolean(message.payload?.capturing);
+      log(
+        'capture-sync tab',
+        tabId,
+        'capturing',
+        capturing,
+        'steps',
+        message.payload?.bundle?.steps?.length,
+      );
+      await captureSessions.set(tabId, {
+        capturing,
+        bundle: message.payload?.bundle ?? null,
+      });
+      return { synced: true };
+    }
     default:
       return null;
   }
@@ -26,21 +57,28 @@ chrome.action.onClicked.addListener(async (tab) => {
     return;
   }
 
+  const visible = toolbarVisibility.toggle(tab.id);
+  log('action clicked on tab', tab.id, 'visible', visible);
+
   try {
-    if (openOnLoadState.isEnabledForTab(tab.id)) {
-      openOnLoadState.disableForTab(tab.id);
-      await chrome.tabs.sendMessage(tab.id, { type: 'take5:hide-toolbar' });
-      return;
-    }
-
-    if (!openOnLoadState.enableForTab(tab.id)) {
-      return;
-    }
-
-    await chrome.tabs.reload(tab.id);
+    await chrome.tabs.sendMessage(tab.id, { type: 'take5:set-toolbar-visible', visible });
   } catch {
-    // Ignore unsupported pages like chrome:// where content scripts cannot run.
+    // No content script yet (page loaded before the extension was installed or
+    // reloaded). Inject it now; its ready handshake picks up the flag above.
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['content-script.js'],
+      });
+    } catch {
+      // Unsupported pages like chrome:// where content scripts cannot run.
+      toolbarVisibility.forget(tab.id);
+    }
   }
+});
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  toolbarVisibility.forget(tabId);
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -48,6 +86,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     'take5:list-scenarios',
     'take5:save-scenario',
     'take5:delete-scenario',
+    'take5:capture-sync',
+    'take5:toolbar-visibility',
     'take5:content-script-ready',
   ]);
 
@@ -56,14 +96,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message?.type === 'take5:content-script-ready') {
-    sendResponse({
-      ok: true,
-      showToolbar: openOnLoadState.consumePendingOpen(sender.tab?.id ?? null),
-    });
-    return false;
+    const tabId = sender.tab?.id ?? null;
+    log('content-script-ready from tab', tabId);
+    captureSessions
+      .get(tabId)
+      .then((session) =>
+        sendResponse({
+          ok: true,
+          showToolbar: toolbarVisibility.isVisible(tabId),
+          session,
+        }),
+      )
+      .catch(() => sendResponse({ ok: true, showToolbar: false, session: null }));
+    return true;
   }
 
-  handleMessage(message)
+  handleMessage(message, sender)
     .then((result) => sendResponse({ ok: true, ...result }))
     .catch((error) => sendResponse({ ok: false, error: error.message }));
 

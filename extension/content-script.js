@@ -1,51 +1,100 @@
 const TOOLBAR_FRAME_ID = 'take5-toolbar-frame';
-const TOOLBAR_LAUNCHER_ID = 'take5-toolbar-launcher';
 const TOGGLE_MESSAGE_TYPE = 'take5:toolbar-toggle';
+const RESIZE_MESSAGE_TYPE = 'take5:toolbar-resize';
+const DRAG_START_MESSAGE_TYPE = 'take5:toolbar-drag-start';
 const COMMAND_MESSAGE_TYPE = 'take5:command';
 
-function createToolbarVisibilityController({ frame, launcher }) {
+// Collapsed height is a fallback; the toolbar reports its bar's real height so
+// the frame wraps it tightly.
+const COLLAPSED_SIZE = { width: 500, height: 48 };
+const EXPANDED_SIZE = { width: 500, height: 640 };
+const DEFAULT_TYPING_DELAY_MS = 45;
+
+function log(...args) {
+  try {
+    console.log('[Take5:content]', ...args);
+  } catch {
+    // console may be unavailable in some contexts.
+  }
+}
+
+function applyFrameSize(frame, size) {
+  frame.style.width = `${size.width}px`;
+  frame.style.height = `${size.height}px`;
+}
+
+// Let the user drag the frame by its bar. The bar's mousedown (inside the
+// iframe) hands off here; we track the pointer on the top document so the drag
+// keeps working even when the cursor leaves the frame. `grabX/grabY` is the
+// pointer's offset from the frame's top-left corner (equal to its coordinates
+// within the iframe).
+function beginFrameDrag(frame, grabX, grabY) {
+  const rect = frame.getBoundingClientRect();
+
+  // Switch from the centered layout (left:50% + translateX(-50%)) to absolute
+  // pixel positioning so the frame follows the pointer directly.
+  frame.style.left = `${rect.left}px`;
+  frame.style.top = `${rect.top}px`;
+  frame.style.transform = 'none';
+  // The frame must not swallow the move/up events while dragging.
+  frame.style.pointerEvents = 'none';
+  // Avoid selecting page text under the moving cursor.
+  const previousUserSelect = document.body?.style.userSelect ?? '';
+  if (document.body) {
+    document.body.style.userSelect = 'none';
+  }
+
+  const onMove = (event) => {
+    const maxLeft = Math.max(0, window.innerWidth - rect.width);
+    const maxTop = Math.max(0, window.innerHeight - rect.height);
+    const left = Math.min(Math.max(0, event.clientX - grabX), maxLeft);
+    const top = Math.min(Math.max(0, event.clientY - grabY), maxTop);
+    frame.style.left = `${left}px`;
+    frame.style.top = `${top}px`;
+  };
+
+  const onUp = () => {
+    window.removeEventListener('mousemove', onMove, true);
+    window.removeEventListener('mouseup', onUp, true);
+    frame.style.pointerEvents = '';
+    if (document.body) {
+      document.body.style.userSelect = previousUserSelect;
+    }
+  };
+
+  window.addEventListener('mousemove', onMove, true);
+  window.addEventListener('mouseup', onUp, true);
+}
+
+// Mirrors extension/toolbar-visibility.js, which is unit-tested; the content
+// script stays a classic script and cannot import it.
+function createToolbarVisibilityController({ frame, onChange }) {
   return {
     show() {
       frame.style.display = 'block';
-      launcher.style.display = 'none';
+      onChange(true);
     },
     hide() {
       frame.style.display = 'none';
-      launcher.style.display = 'block';
+      onChange(false);
+    },
+    isVisible() {
+      return frame.style.display !== 'none';
     },
   };
 }
 
 function injectToolbar() {
-  if (document.getElementById(TOOLBAR_FRAME_ID) || document.getElementById(TOOLBAR_LAUNCHER_ID)) {
+  const existing = document.getElementById(TOOLBAR_FRAME_ID);
+  if (existing) {
     return {
-      frame: document.getElementById(TOOLBAR_FRAME_ID),
-      launcher: document.getElementById(TOOLBAR_LAUNCHER_ID),
+      frame: existing,
       visibility: createToolbarVisibilityController({
-        frame: document.getElementById(TOOLBAR_FRAME_ID),
-        launcher: document.getElementById(TOOLBAR_LAUNCHER_ID),
+        frame: existing,
+        onChange: reportToolbarVisibility,
       }),
     };
   }
-
-  const launcher = document.createElement('button');
-  launcher.id = TOOLBAR_LAUNCHER_ID;
-  launcher.type = 'button';
-  launcher.textContent = 'Take5';
-  launcher.setAttribute('aria-label', 'Show Take5 toolbar');
-  launcher.style.position = 'fixed';
-  launcher.style.right = '18px';
-  launcher.style.bottom = '18px';
-  launcher.style.zIndex = '2147483647';
-  launcher.style.display = 'none';
-  launcher.style.border = '0';
-  launcher.style.borderRadius = '999px';
-  launcher.style.padding = '10px 14px';
-  launcher.style.background = 'linear-gradient(135deg, #38bdf8, #0ea5e9)';
-  launcher.style.color = '#04111f';
-  launcher.style.font = '600 13px/1.1 system-ui, sans-serif';
-  launcher.style.boxShadow = '0 14px 40px rgba(2, 6, 23, 0.3)';
-  launcher.style.cursor = 'pointer';
 
   const frame = document.createElement('iframe');
   frame.id = TOOLBAR_FRAME_ID;
@@ -53,34 +102,50 @@ function injectToolbar() {
   frame.src = chrome.runtime.getURL('toolbar.html');
   frame.setAttribute('aria-label', 'Take5 toolbar');
   frame.style.position = 'fixed';
-  frame.style.right = '16px';
-  frame.style.bottom = '16px';
-  frame.style.width = '360px';
-  frame.style.height = '560px';
+  frame.style.left = '50%';
+  frame.style.top = '12px';
+  frame.style.transform = 'translateX(-50%)';
+  applyFrameSize(frame, COLLAPSED_SIZE);
   frame.style.border = '0';
   frame.style.zIndex = '2147483647';
   frame.style.background = 'transparent';
-  frame.style.boxShadow = '0 18px 50px rgba(15, 23, 42, 0.28)';
-  frame.style.borderRadius = '18px';
+  frame.style.colorScheme = 'normal';
   frame.style.overflow = 'hidden';
-  const visibility = createToolbarVisibilityController({ frame, launcher });
-
-  launcher.addEventListener('click', () => {
-    visibility.show();
+  // Hidden until the user clicks the extension icon.
+  frame.style.display = 'none';
+  const visibility = createToolbarVisibilityController({
+    frame,
+    onChange: reportToolbarVisibility,
   });
 
   window.addEventListener('message', (event) => {
-    if (event.source !== frame.contentWindow || event.data?.type !== TOGGLE_MESSAGE_TYPE) {
+    if (event.source !== frame.contentWindow) {
       return;
     }
 
-    visibility.hide();
+    if (event.data?.type === TOGGLE_MESSAGE_TYPE) {
+      visibility.hide();
+      return;
+    }
+
+    if (event.data?.type === DRAG_START_MESSAGE_TYPE) {
+      beginFrameDrag(frame, event.data.x, event.data.y);
+      return;
+    }
+
+    if (event.data?.type === RESIZE_MESSAGE_TYPE) {
+      const base = event.data.expanded ? EXPANDED_SIZE : COLLAPSED_SIZE;
+      const height =
+        typeof event.data.height === 'number' && event.data.height > 0
+          ? event.data.height
+          : base.height;
+      applyFrameSize(frame, { width: base.width, height });
+    }
   });
 
   const root = document.body || document.documentElement;
-  root.appendChild(launcher);
   root.appendChild(frame);
-  return { frame, launcher, visibility };
+  return { frame, visibility };
 }
 
 function getToolbarFrame() {
@@ -104,6 +169,27 @@ function postStatus(mode, message) {
   });
 }
 
+// Keep the background's per-tab flag in sync so the extension icon always
+// toggles from the state the user actually sees.
+function reportToolbarVisibility(visible) {
+  sendRuntimeMessage({
+    type: 'take5:toolbar-visibility',
+    payload: { visible },
+  }).catch((error) => {
+    log('toolbar-visibility sync failed:', error.message);
+  });
+}
+
+function syncCaptureToBackground(bundle, capturing) {
+  sendRuntimeMessage({
+    type: 'take5:capture-sync',
+    payload: { bundle, capturing },
+  }).catch((error) => {
+    // The service worker may be briefly unavailable; the next step re-syncs.
+    log('capture-sync to background failed:', error.message);
+  });
+}
+
 function sendRuntimeMessage(message) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(message, (response) => {
@@ -118,8 +204,76 @@ function sendRuntimeMessage(message) {
   });
 }
 
+function createReplayPointerEvent(type, point, buttons) {
+  const init = {
+    bubbles: true,
+    cancelable: true,
+    clientX: point.x,
+    clientY: point.y,
+    button: 0,
+    buttons,
+    pointerId: 1,
+    pointerType: 'mouse',
+    isPrimary: true,
+  };
+  if (typeof PointerEvent === 'function') {
+    return new PointerEvent(type, init);
+  }
+  return new MouseEvent(type.replace('pointer', 'mouse'), init);
+}
+
+async function replayPointerDrag(document, step, capturedViewport = null) {
+  const points = step.points ?? [];
+  if (points.length < 2) {
+    throw new Error('pointer_drag requires at least two points');
+  }
+
+  const scaleX = capturedViewport?.width ? window.innerWidth / capturedViewport.width : 1;
+  const scaleY = capturedViewport?.height ? window.innerHeight / capturedViewport.height : 1;
+  const scaledPoints = points.map((point) => ({
+    ...point,
+    x: point.x * scaleX,
+    y: point.y * scaleY,
+  }));
+  const target = step.selector ? document.querySelector(step.selector) : null;
+  const dispatch = (type, point, buttons) =>
+    (target ?? document.elementFromPoint?.(point.x, point.y) ?? document).dispatchEvent(
+      createReplayPointerEvent(type, point, buttons),
+    );
+
+  dispatch('pointerdown', scaledPoints[0], 1);
+  let previousTime = scaledPoints[0].t;
+  for (const point of scaledPoints.slice(1)) {
+    const delay = Math.max(0, point.t - previousTime);
+    if (delay > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+    dispatch('pointermove', point, 1);
+    previousTime = point.t;
+  }
+  dispatch('pointerup', scaledPoints.at(-1), 0);
+}
+
+async function replayFill(target, value, typingDelayMs = DEFAULT_TYPING_DELAY_MS) {
+  target.focus?.();
+  target.value = '';
+  target.dispatchEvent?.(new Event('input', { bubbles: true }));
+
+  for (const character of String(value ?? '')) {
+    target.value += character;
+    target.dispatchEvent?.(new Event('input', { bubbles: true }));
+    if (typingDelayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, typingDelayMs));
+    }
+  }
+
+  target.dispatchEvent?.(new Event('change', { bubbles: true }));
+}
+
 async function bootstrap() {
+  log('bootstrap start at', window.location.href);
   const toolbar = injectToolbar();
+  log('toolbar injected');
 
   const [{ createAnnotationOverlay }, { createCaptureEngine }, { createReplayEngine }] =
     await Promise.all([
@@ -127,6 +281,7 @@ async function bootstrap() {
       import(chrome.runtime.getURL('capture-engine.js')),
       import(chrome.runtime.getURL('replay-engine.js')),
     ]);
+  log('modules imported (overlay, capture, replay)');
 
   const overlay = createAnnotationOverlay(document);
   const captureEngine = createCaptureEngine({
@@ -135,10 +290,14 @@ async function bootstrap() {
     overlay,
     baseUrl: window.location.href,
     name: document.title,
+    onUpdate: (bundle) => {
+      postToToolbar({ type: 'take5:capture-state', bundle });
+      syncCaptureToBackground(bundle, true);
+    },
   });
   const replayEngine = createReplayEngine({
     overlay,
-    runStep: async (step) => {
+    runStep: async (step, context) => {
       const selector = step.selector ?? step.ref ?? null;
       const target = selector ? document.querySelector(selector) : null;
 
@@ -153,10 +312,7 @@ async function bootstrap() {
           break;
         case 'fill':
           if (target) {
-            target.focus?.();
-            target.value = step.value ?? '';
-            target.dispatchEvent?.(new Event('input', { bubbles: true }));
-            target.dispatchEvent?.(new Event('change', { bubbles: true }));
+            await replayFill(target, step.value, step.typingDelayMs ?? DEFAULT_TYPING_DELAY_MS);
           }
           break;
         case 'select':
@@ -180,6 +336,9 @@ async function bootstrap() {
           if (!target || !String(target.textContent ?? '').includes(step.text)) {
             throw new Error(`assert_text failed for ${selector ?? step.ref ?? 'target'}`);
           }
+          break;
+        case 'pointer_drag':
+          await replayPointerDrag(document, step, context.plan?.viewport);
           break;
         default:
           break;
@@ -214,23 +373,48 @@ async function bootstrap() {
     }
 
     await replayEngine.load(bundle);
+    const viewport = bundle.metadata?.viewport;
+    const viewportDiffers =
+      viewport && (viewport.width !== window.innerWidth || viewport.height !== window.innerHeight);
 
     if (payload.mode === 'step') {
-      postStatus('replaying', 'Step-through replay ready. Use the Next/Back keyboard shortcuts.');
+      postStatus(
+        'replaying',
+        viewportDiffers
+          ? 'Viewport differs; pointer drags will be scaled to this window.'
+          : 'Step-through replay ready. Use the Next/Back keyboard shortcuts.',
+      );
       return;
     }
 
-    postStatus('replaying', 'Replaying scenario.');
+    postStatus(
+      'replaying',
+      viewportDiffers
+        ? 'Replaying scenario; pointer drags are scaled to this window.'
+        : 'Replaying scenario.',
+    );
     await replayEngine.play();
     postStatus('idle', 'Replay finished.');
   }
 
   window.addEventListener('message', async (event) => {
     const message = event.data;
+
+    // A freshly (re)loaded toolbar asks for the current capture so it can show
+    // live progress immediately, e.g. after resuming across a navigation.
+    if (message?.type === 'take5:request-state') {
+      if (captureEngine.isCapturing()) {
+        postToToolbar({ type: 'take5:capture-state', bundle: captureEngine.getBundle() });
+        postStatus('capturing', 'Capturing.');
+      }
+      return;
+    }
+
     if (!message || message.type !== COMMAND_MESSAGE_TYPE) {
       return;
     }
 
+    log('command received:', message.command);
     try {
       switch (message.command) {
         case 'capture:start': {
@@ -248,6 +432,7 @@ async function bootstrap() {
           const bundle = captureEngine.stopCapture();
           postStatus('idle', 'Capture stopped.');
           postToToolbar({ type: 'take5:capture-state', bundle });
+          syncCaptureToBackground(bundle, false);
           break;
         }
         case 'replay:start':
@@ -274,14 +459,12 @@ async function bootstrap() {
   });
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message?.type === 'take5:show-toolbar') {
-      toolbar?.visibility?.show();
-      sendResponse({ ok: true });
-      return true;
-    }
-
-    if (message?.type === 'take5:hide-toolbar') {
-      toolbar?.visibility?.hide();
+    if (message?.type === 'take5:set-toolbar-visible') {
+      if (message.visible) {
+        toolbar?.visibility?.show();
+      } else {
+        toolbar?.visibility?.hide();
+      }
       sendResponse({ ok: true });
       return true;
     }
@@ -295,18 +478,38 @@ async function bootstrap() {
 
   try {
     const response = await sendRuntimeMessage({ type: 'take5:content-script-ready' });
+    log(
+      'content-script-ready response:',
+      JSON.stringify({
+        showToolbar: response?.showToolbar,
+        capturing: response?.session?.capturing,
+        steps: response?.session?.bundle?.steps?.length,
+      }),
+    );
     if (response?.ok && response.showToolbar) {
       toolbar?.visibility?.show();
     }
-  } catch {
-    // Ignore unsupported pages or transient runtime reload races.
+
+    // Resume an in-progress capture that survived a full page navigation.
+    if (response?.session?.capturing && response.session.bundle) {
+      log('resuming capture after navigation');
+      captureEngine.resumeCapture(response.session.bundle);
+      toolbar?.visibility?.show();
+      postStatus('capturing', 'Capture resumed after navigation.');
+    }
+  } catch (error) {
+    log('content-script-ready failed:', error.message);
   }
 
-  postStatus('idle', 'Ready.');
+  if (!captureEngine.isCapturing()) {
+    postStatus('idle', 'Ready.');
+  }
 }
 
 if (typeof document !== 'undefined' && globalThis.chrome?.runtime) {
+  log('content script injected (build: logging-1)');
   bootstrap().catch((error) => {
+    log('bootstrap failed:', error.message, error.stack);
     postStatus('idle', error.message);
   });
 }

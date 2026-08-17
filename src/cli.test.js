@@ -24,6 +24,11 @@ test('parseCliArgs parses the run command shell options', () => {
     outDir: './take5-output',
     debug: true,
     cutDelays: false,
+    render: false,
+    aiCaptions: false,
+    userDataDir: null,
+    authUrl: null,
+    pat: null,
   });
 });
 
@@ -40,7 +45,47 @@ test('parseCliArgs accepts default run without explicit command', () => {
     outDir: './take5-output',
     debug: false,
     cutDelays: false,
+    render: false,
+    aiCaptions: false,
+    userDataDir: null,
+    authUrl: null,
+    pat: null,
   });
+});
+
+test('parseCliArgs parses the --render and --ai-captions flags', () => {
+  const result = parseCliArgs(['run', 'fixtures/sample-capture.json', '--render', '--ai-captions']);
+  assert.equal(result.render, true);
+  assert.equal(result.aiCaptions, true);
+});
+
+test('parseCliArgs parses --user-data-dir with a value', () => {
+  const result = parseCliArgs([
+    'run',
+    'fixtures/sample-capture.json',
+    '--user-data-dir',
+    '/tmp/profile',
+  ]);
+  assert.equal(result.userDataDir, '/tmp/profile');
+});
+
+test('parseCliArgs parses --pat with a value', () => {
+  const result = parseCliArgs(['run', 'fixtures/sample-capture.json', '--pat', 'pat_abc123']);
+  assert.equal(result.pat, 'pat_abc123');
+});
+
+test('parseCliArgs rejects --pat without a token', () => {
+  assert.throws(
+    () => parseCliArgs(['run', 'fixtures/sample-capture.json', '--pat']),
+    /--pat flag requires a token/,
+  );
+});
+
+test('parseCliArgs rejects --user-data-dir without a path', () => {
+  assert.throws(
+    () => parseCliArgs(['run', 'fixtures/sample-capture.json', '--user-data-dir']),
+    /--user-data-dir flag requires a path/,
+  );
 });
 
 test('parseCliArgs rejects unknown flags with CliUsageError', () => {

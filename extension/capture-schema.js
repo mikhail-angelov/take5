@@ -7,9 +7,10 @@ const SUPPORTED_STEP_TYPES = new Set([
   'scroll',
   'wait',
   'assert_text',
+  'pointer_drag',
 ]);
 
-const SUPPORTED_SCHEMA_VERSIONS = new Set([1]);
+const SUPPORTED_SCHEMA_VERSIONS = new Set([1, 2]);
 const SUPPORTED_SCROLL_DIRECTIONS = new Set(['up', 'down']);
 
 function isPlainObject(value) {
@@ -26,6 +27,27 @@ function isFiniteNumber(value) {
 
 function hasLocatorShape(step) {
   return isNonEmptyString(step.ref) || isNonEmptyString(step.selector);
+}
+
+function isValidViewport(viewport) {
+  return (
+    isPlainObject(viewport) &&
+    isFiniteNumber(viewport.width) &&
+    isFiniteNumber(viewport.height) &&
+    viewport.width > 0 &&
+    viewport.height > 0
+  );
+}
+
+function isValidPointerPoint(point, previousTime) {
+  return (
+    isPlainObject(point) &&
+    isFiniteNumber(point.x) &&
+    isFiniteNumber(point.y) &&
+    isFiniteNumber(point.t) &&
+    point.t >= 0 &&
+    point.t >= previousTime
+  );
 }
 
 function validateStep(step) {
@@ -55,6 +77,12 @@ function validateStep(step) {
     case 'fill':
       if (!hasLocatorShape(step) || typeof step.value !== 'string') {
         throw new Error('fill step requires ref or selector plus value');
+      }
+      if (
+        step.typingDelayMs !== undefined &&
+        (!isFiniteNumber(step.typingDelayMs) || step.typingDelayMs < 0)
+      ) {
+        throw new Error('fill step typingDelayMs must be a non-negative number');
       }
       break;
     case 'select':
@@ -86,6 +114,21 @@ function validateStep(step) {
         throw new Error('assert_text step requires ref or selector plus text');
       }
       break;
+    case 'pointer_drag': {
+      if (!Array.isArray(step.points) || step.points.length < 2) {
+        throw new Error('pointer_drag step requires at least two timed points');
+      }
+      let previousTime = 0;
+      for (const point of step.points) {
+        if (!isValidPointerPoint(point, previousTime)) {
+          throw new Error(
+            'pointer_drag points require finite x/y and non-decreasing non-negative t',
+          );
+        }
+        previousTime = point.t;
+      }
+      break;
+    }
     default:
       break;
   }
@@ -140,6 +183,12 @@ export function validateCaptureBundle(bundle) {
 
   if (!SUPPORTED_SCHEMA_VERSIONS.has(bundle.metadata.schemaVersion)) {
     throw new Error(`Unsupported capture bundle schemaVersion: ${bundle.metadata.schemaVersion}`);
+  }
+
+  if (bundle.metadata.schemaVersion >= 2 && !isValidViewport(bundle.metadata.viewport)) {
+    throw new Error(
+      'schemaVersion 2 capture metadata requires a positive viewport width and height',
+    );
   }
 
   if (!isNonEmptyString(bundle.metadata.scenarioId)) {

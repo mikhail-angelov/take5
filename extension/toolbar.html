@@ -7,69 +7,74 @@
     <link rel="stylesheet" href="./toolbar.css" />
   </head>
   <body>
-    <main class="panel">
-      <header class="hero">
-        <div>
-          <p class="eyebrow">Take5</p>
-          <h1>Scenario Shell</h1>
-        </div>
-        <div class="hero-actions">
-          <span id="status-pill" class="status-pill">Idle</span>
-          <button type="button" id="dismiss-button" class="ghost" aria-label="Hide toolbar">
-            Hide
+    <main class="panel" id="panel" data-expanded="false">
+      <div class="bar">
+        <span class="brand">Take5</span>
+        <span id="status-pill" class="status-pill">Idle</span>
+        <span class="bar-steps"><strong id="bar-step-count">0</strong> steps</span>
+        <div class="bar-actions">
+          <button type="button" data-action="start" title="Start capture">Start</button>
+          <button type="button" data-action="stop" title="Stop capture">Stop</button>
+          <button type="button" id="export-button" title="Export current scenario">Export</button>
+          <button
+            type="button"
+            id="expand-button"
+            class="ghost"
+            aria-expanded="false"
+            title="Expand toolbar"
+          >
+            Expand
           </button>
+          <button type="button" id="dismiss-button" class="ghost" aria-label="Hide toolbar">✕</button>
         </div>
-      </header>
+      </div>
 
-      <section class="stats" aria-label="Current scenario stats">
-        <div>
-          <span class="stat-label">Steps</span>
-          <strong id="step-count">0</strong>
-        </div>
-        <div>
-          <span class="stat-label">Notes</span>
-          <strong id="annotation-count">0</strong>
-        </div>
-        <div>
-          <span class="stat-label">Saved</span>
-          <strong id="scenario-count">0</strong>
-        </div>
-      </section>
-
-      <section class="actions" aria-label="Toolbar actions">
-        <button type="button" data-action="start">Start</button>
-        <button type="button" data-action="stop">Stop</button>
-        <button type="button" data-action="save" class="primary">Save</button>
-        <button type="button" data-action="replay">Replay</button>
-        <button type="button" data-action="scenarios">Scenarios</button>
-        <button type="button" data-action="delete">Delete</button>
-      </section>
-
-      <section class="field-group">
-        <div class="field-head">
-          <label for="scenario-list">Saved scenarios</label>
-          <button type="button" id="refresh-button">Refresh</button>
-        </div>
-        <select id="scenario-list" size="6" aria-label="Saved scenarios list"></select>
-      </section>
-
-      <section class="field-group">
-        <div class="field-head">
-          <label for="scenario-json">Scenario JSON</label>
-          <div class="inline-actions">
-            <button type="button" id="import-button">Import</button>
-            <button type="button" id="export-button">Export</button>
+      <div class="details" id="details">
+        <section class="stats" aria-label="Current scenario stats">
+          <div>
+            <span class="stat-label">Steps</span>
+            <strong id="step-count">0</strong>
           </div>
-        </div>
-        <textarea
-          id="scenario-json"
-          spellcheck="false"
-          placeholder="Paste or edit a scenario JSON bundle here."
-        ></textarea>
-        <input id="import-input" type="file" accept="application/json" hidden />
-      </section>
+          <div>
+            <span class="stat-label">Notes</span>
+            <strong id="annotation-count">0</strong>
+          </div>
+          <div>
+            <span class="stat-label">Saved</span>
+            <strong id="scenario-count">0</strong>
+          </div>
+        </section>
 
-      <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+        <section class="actions" aria-label="Toolbar actions">
+          <button type="button" data-action="save" class="primary">Save</button>
+          <button type="button" data-action="replay">Replay</button>
+          <button type="button" data-action="scenarios">Scenarios</button>
+          <button type="button" data-action="delete">Delete</button>
+        </section>
+
+        <section class="field-group">
+          <div class="field-head">
+            <label for="scenario-list">Saved scenarios</label>
+            <button type="button" id="refresh-button">Refresh</button>
+          </div>
+          <select id="scenario-list" size="6" aria-label="Saved scenarios list"></select>
+        </section>
+
+        <section class="field-group">
+          <div class="field-head">
+            <label for="scenario-json">Scenario JSON</label>
+            <button type="button" id="import-button">Import</button>
+          </div>
+          <textarea
+            id="scenario-json"
+            spellcheck="false"
+            placeholder="Paste or edit a scenario JSON bundle here."
+          ></textarea>
+          <input id="import-input" type="file" accept="application/json" hidden />
+        </section>
+
+        <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+      </div>
     </main>
 
     <script type="module" src="./toolbar.js"></script>

@@ -21,6 +21,26 @@ function normalizeTargetRect(targetRect) {
   return { x, y, width, height };
 }
 
+function normalizeViewport(viewport) {
+  if (!viewport || typeof viewport !== 'object' || Array.isArray(viewport)) {
+    return undefined;
+  }
+
+  const { width, height } = viewport;
+  if (
+    typeof width !== 'number' ||
+    !Number.isFinite(width) ||
+    width <= 0 ||
+    typeof height !== 'number' ||
+    !Number.isFinite(height) ||
+    height <= 0
+  ) {
+    return undefined;
+  }
+
+  return { width, height };
+}
+
 function normalizeReplayAnnotation(annotation, orderIndex) {
   const normalized = {
     description: annotation.description,
@@ -62,6 +82,9 @@ function normalizeReplayStep(step, index) {
       if (normalizeStringField(step.selector)) {
         normalized.selector = step.selector;
       }
+      if (normalizeStringField(step.label)) {
+        normalized.label = step.label;
+      }
       break;
     case 'fill':
     case 'select':
@@ -71,7 +94,18 @@ function normalizeReplayStep(step, index) {
       if (normalizeStringField(step.selector)) {
         normalized.selector = step.selector;
       }
+      if (normalizeStringField(step.label)) {
+        normalized.label = step.label;
+      }
       normalized.value = step.value;
+      if (
+        step.type === 'fill' &&
+        typeof step.typingDelayMs === 'number' &&
+        Number.isFinite(step.typingDelayMs) &&
+        step.typingDelayMs >= 0
+      ) {
+        normalized.typingDelayMs = step.typingDelayMs;
+      }
       break;
     case 'keypress':
       normalized.key = step.key;
@@ -91,6 +125,12 @@ function normalizeReplayStep(step, index) {
         normalized.selector = step.selector;
       }
       normalized.text = step.text;
+      break;
+    case 'pointer_drag':
+      if (normalizeStringField(step.selector)) {
+        normalized.selector = step.selector;
+      }
+      normalized.points = step.points.map((point) => ({ x: point.x, y: point.y, t: point.t }));
       break;
     default:
       break;
@@ -165,7 +205,7 @@ export function createReplayPlan(bundle) {
     annotations.push(normalizedAnnotation);
   });
 
-  return {
+  const plan = {
     version: bundle.metadata.schemaVersion,
     scenarioId: bundle.metadata.scenarioId,
     baseUrl: normalizeStringField(bundle.metadata.baseUrl) || null,
@@ -173,4 +213,11 @@ export function createReplayPlan(bundle) {
     annotations,
     steps,
   };
+
+  const viewport = normalizeViewport(bundle.metadata.viewport);
+  if (viewport) {
+    plan.viewport = viewport;
+  }
+
+  return plan;
 }

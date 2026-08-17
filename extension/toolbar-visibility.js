@@ -1,12 +1,15 @@
-export function createToolbarVisibilityController({ frame, launcher }) {
+export function createToolbarVisibilityController({ frame, onChange = () => {} }) {
   return {
     show() {
       frame.style.display = 'block';
-      launcher.style.display = 'none';
+      onChange(true);
     },
     hide() {
       frame.style.display = 'none';
-      launcher.style.display = 'block';
+      onChange(false);
+    },
+    isVisible() {
+      return frame.style.display !== 'none';
     },
   };
 }

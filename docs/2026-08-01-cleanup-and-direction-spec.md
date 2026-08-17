@@ -131,7 +131,7 @@ Playwright-replay — состояние roadmap, а не текущее пов�
 - **Тесты:** 58 шт., все зелёные; пайплайн capture→plan→artifacts покрыт с
   edge-cases (кривой capture, `--out` в файл, ошибки записи). Нативный
   `node --test` без лишних фреймворков.
-- **Расширение:** аккуратная декомпозиция (`scenario-store`, `open-on-load-state`,
+- **Расширение:** аккуратная декомпозиция (`scenario-store`, `toolbar-visibility-state`,
   `capture-engine`, `replay-engine`, `annotation-overlay`), каждый модуль с тестом;
   `service-worker.js` корректно обрабатывает `chrome://` через try/catch.
 - **Обработка ошибок:** `errors.js` + `CliUsageError`/`CliOperationError` — сырые
@@ -151,8 +151,30 @@ Playwright-replay — состояние roadmap, а не текущее пов�
 4. **[🟠]** Синхронизировать `README.md` / `docs/prd.md` с реальностью (§3.4).
 5. **[🟡]** Добавить ESLint + Prettier, привести стиль к единому (§3.5).
 
-**Фаза B — целевой пайплайн видео (§6):** 6. **[🔴]** `replay-runner.js`: исполнить `plan.json` в Playwright, инжектить
-позиционные callout-ы, собрать trace + `zoom-report.json` + `captions.srt`. 7. **[🔴]** `render.js`: обёртка над `playwright-recast` (trace → MP4). 8. **[🟠]** Подключить фазу B к `commands/run.js` (флаги `--render` / `--no-render`). 9. **[🟡]** Фича 8: AI-автоподпись шагов (опционально, за флагом).
+**Фаза B — целевой пайплайн видео (§6):**
+
+- ✅ `src/replay-runner.js`: исполняет `plan.json` в headless Chromium, инжектит
+  позиционные callout-ы (фича 7), пишет `trace.zip` + `.webm`.
+- ✅ `src/render.js`: обёртка над `playwright-recast` (speedUp + autoZoom +
+  cursorOverlay + clickEffect → `demo.mp4`). Фичи 1-5.
+- ✅ Подключено к `commands/run.js` за флагом `--render`. Юнит-тесты на чистые
+  хелперы + проверено end-to-end (герметичный `file://`-фикстур → валидный H.264 1080p).
+- ✅ **Фичи 6+8 (наррация/субтитры)** — `src/captions.js`: `describeStep` строит
+  подпись на каждый значимый шаг плана; recast таймит и чанкит их через
+  `.subtitles(textFn)` (фича 6) и прожигает. `--ai-captions` натурализует их
+  одним LLM-вызовом (feature 8, OpenAI-совместимый через `fetch`, без SDK;
+  fallback на детерминированные при отсутствии ключа/ошибке). Проверено e2e:
+  подписи ложатся 1:1 на значимые действия, не съедаются callout-ами/assert-ами.
+
+**Найдено при интеграции recast (важно для §6.2):**
+
+- `autoZoom()` **требует** предшествующего `subtitles*()` — зум привязан к окнам
+  субтитров. Без осмысленного SRT ставим `subtitlesFromTrace()` только ради окон
+  зума и **не прожигаем** их (`burnSubtitles:false`).
+- Callout-hold (`waitForTimeout`) классифицируется recast как idle и ускоряется —
+  позиционные callout-ы (фича 7) могут мелькать на реальном контенте. Прожжённые
+  наррация-субтитры (6+8) читаемость демо закрывают; тюнинг длительности
+  callout-hold vs idle-speed — открытый вопрос, если понадобится.
 
 **Критерий готовности Фазы A:** `npm test` зелёный; `dependencies` содержит
 только используемые пакеты; ни одного файла с нулём входящих импортов вне точек
@@ -177,33 +199,39 @@ capture (JSON)  ──export──►  loadCaptureBundle
                                • исполняет шаги плана
                                • инжектит позиционные callout-ы в DOM (фича 7)
                                • пишет trace.zip + video.webm
-                               • собирает zoom-report.json (rect → доли вьюпорта)
-                               • собирает captions.srt (из аннотаций / AI, фича 8)
+                               • (roadmap) captions.srt из аннотаций / AI (фича 8)
                              render (playwright-recast)
-                               Recast.from(trace)
-                                 .speedUp(...)              ← фича 4
-                                 .enrichZoomFromReport(...) ← фича 3
-                                 .subtitlesFromSrt(...)     ← фича 6
+                               Recast.from(runDir)
+                                 .speedUp(...)          ← фича 4
+                                 .subtitlesFromTrace()  ← окна для зума (не прожиг)
+                                 .autoZoom()            ← фича 3 (из координат trace)
+                                 .cursorOverlay()       ← фичи 1,2
+                                 .clickEffect()         ← ripple
                                  .render({format:'mp4'}).toFile()
-                                                          → demo.mp4 (фичи 1,2,5)
+                                                        → demo.mp4 (фича 5)
 ```
 
-Ключ: `playwright-recast` принимает данные **извне** — `enrichZoomFromReport()` и
-`subtitlesFromSrt()` — поэтому BDD-хелперы recast нам не нужны, координаты зума и
-тексты подписей мы генерируем прямо из capture (у нас есть точные rect элементов).
+**Уточнено при реализации:** зум делаем через `autoZoom()`, который берёт
+координаты **прямо из fill/click-действий в trace** — это проще, чем изначально
+запланированный `zoom-report.json` + `enrichZoomFromReport()`, и не требует
+вручную считать rect→доли (принцип «простейшее решение»). Ограничение recast:
+`autoZoom()` требует предшествующего `subtitles*()` (зум привязан к окнам
+субтитров) и пропускает окна короче 500 мс. Поэтому без осмысленного SRT ставим
+`subtitlesFromTrace()` только ради окон и **не прожигаем** их (`burnSubtitles:false`).
+`subtitlesFromSrt()` для реальных подписей (фичи 6/8) уже поддержан через `srtPath`.
 
 ### 6.2. Маппинг фич 1-8
 
-| #   | Фича                                         | Кто делает                | Как                                                                 |
-| --- | -------------------------------------------- | ------------------------- | ------------------------------------------------------------------- |
-| 1   | Синтез курсора (glide + held-approach)       | **recast**                | авто из click/selectOption в trace                                  |
-| 2   | `glideAndClick` / `glideAndType` тайминг     | **recast**                | внутренняя анимация оверлея                                         |
-| 3   | Авто-зум к элементу с easing                 | **recast**, данные — наши | `enrichZoomFromReport(zoomSteps)` из rect'ов capture                |
-| 4   | Классификация темпа / вырезание простоев     | **recast**                | `.speedUp({duringIdle, duringUserAction})`                          |
-| 5   | FFmpeg-рендер (курсор/зум/субтитры запечены) | **recast**                | `.render().toFile()`                                                |
-| 6   | Punctuation-aware чанкинг подписей           | **recast**                | `.subtitlesFromSrt()` (наш SRT)                                     |
-| 7   | Позиционные callout-карточки «near element»  | **Take5**                 | инжект оверлея в DOM во время replay (запекается в видео до recast) |
-| 8   | AI-автоподпись шага                          | **Take5**                 | LLM генерирует текст подписи из семантики шага → SRT/аннотация      |
+| #   | Фича                                         | Кто делает | Как                                                                 |
+| --- | -------------------------------------------- | ---------- | ------------------------------------------------------------------- |
+| 1   | Синтез курсора (glide + held-approach)       | **recast** | авто из click/selectOption в trace                                  |
+| 2   | `glideAndClick` / `glideAndType` тайминг     | **recast** | внутренняя анимация оверлея                                         |
+| 3   | Авто-зум к элементу с easing                 | **recast** | `.autoZoom()` из координат fill/click в trace (окна ≥500 мс)        |
+| 4   | Классификация темпа / вырезание простоев     | **recast** | `.speedUp({duringIdle, duringUserAction})`                          |
+| 5   | FFmpeg-рендер (курсор/зум/субтитры запечены) | **recast** | `.render().toFile()`                                                |
+| 6   | Punctuation-aware чанкинг подписей           | **recast** | `.subtitlesFromSrt()` (наш SRT)                                     |
+| 7   | Позиционные callout-карточки «near element»  | **Take5**  | инжект оверлея в DOM во время replay (запекается в видео до recast) |
+| 8   | AI-автоподпись шага                          | **Take5**  | LLM генерирует текст подписи из семантики шага → SRT/аннотация      |
 
 Разделение подписей: **позиционные callout-ы** (пункт 7) привязаны к элементу и
 инжектятся в страницу во время replay; **глобальная наррация/субтитры** (пункты
@@ -211,9 +239,12 @@ capture (JSON)  ──export──►  loadCaptureBundle
 
 ### 6.3. Новые артефакты рана
 
-К нынешним `capture.json` + `plan.json` добавляются: `trace.zip`, `video.webm`,
-`zoom-report.json`, `captions.srt`, `demo.mp4`. Промежуточные артефакты остаются
-на диске для отладки и перерендера без повторного прогона браузера.
+К `capture.json` + `plan.json` при `--render` добавляются: `trace.zip`,
+`video.webm` (сырая запись, детерминированное имя), `demo.mp4` (готовое видео),
+плюс служебные recast-файлы (`recast-report.json`, `demo.srt/.vtt`, `screenshots/`).
+`zoom-report.json` **не создаётся** — зум идёт из trace через `autoZoom()` (§6.1).
+`captions.srt` появится со срезом фич 6/8. Промежуточные артефакты остаются на
+диске для отладки и перерендера без повторного прогона браузера.
 
 ### 6.4. Зависимости и требования
 

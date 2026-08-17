@@ -5,7 +5,17 @@ import {
 } from './schema-export.js';
 
 const TOGGLE_MESSAGE_TYPE = 'take5:toolbar-toggle';
+const RESIZE_MESSAGE_TYPE = 'take5:toolbar-resize';
+const DRAG_START_MESSAGE_TYPE = 'take5:toolbar-drag-start';
 const COMMAND_MESSAGE_TYPE = 'take5:command';
+
+function log(...args) {
+  try {
+    console.log('[Take5:toolbar]', ...args);
+  } catch {
+    // console may be unavailable in some contexts.
+  }
+}
 
 function createEmptyBundle() {
   return {
@@ -151,7 +161,9 @@ const hasDocument = typeof document !== 'undefined';
 
 const elements = hasDocument
   ? {
+      panel: document.getElementById('panel'),
       statusPill: document.getElementById('status-pill'),
+      barStepCount: document.getElementById('bar-step-count'),
       stepCount: document.getElementById('step-count'),
       annotationCount: document.getElementById('annotation-count'),
       scenarioCount: document.getElementById('scenario-count'),
@@ -159,6 +171,7 @@ const elements = hasDocument
       scenarioJson: document.getElementById('scenario-json'),
       feedback: document.getElementById('feedback'),
       dismissButton: document.getElementById('dismiss-button'),
+      expandButton: document.getElementById('expand-button'),
       refreshButton: document.getElementById('refresh-button'),
       importButton: document.getElementById('import-button'),
       exportButton: document.getElementById('export-button'),
@@ -177,6 +190,7 @@ function setMode(mode) {
 }
 
 function sendCommand(command, payload = {}) {
+  log('sendCommand ->', command);
   window.parent.postMessage(
     {
       type: COMMAND_MESSAGE_TYPE,
@@ -190,9 +204,53 @@ function sendCommand(command, payload = {}) {
 function renderStats() {
   const bundle = activeCaptureBundle ?? controller.getCurrentBundle();
 
-  elements.stepCount.textContent = String(bundle.steps?.length ?? 0);
+  const stepCount = String(bundle.steps?.length ?? 0);
+  elements.stepCount.textContent = stepCount;
+  elements.barStepCount.textContent = stepCount;
   elements.annotationCount.textContent = String(bundle.annotations?.length ?? 0);
   elements.scenarioCount.textContent = String(controller.getScenarios().length);
+}
+
+// Natural height of the top bar, so the collapsed frame can wrap it tightly
+// instead of leaving dead space below.
+function measureBarHeight() {
+  const bar = document.querySelector('.bar');
+  if (!bar) {
+    return undefined;
+  }
+  const height = Math.ceil(bar.getBoundingClientRect().height);
+  return height > 0 ? height : undefined;
+}
+
+function setExpanded(expanded) {
+  elements.panel.dataset.expanded = expanded ? 'true' : 'false';
+  elements.expandButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  elements.expandButton.textContent = expanded ? 'Collapse' : 'Expand';
+  window.parent.postMessage(
+    { type: RESIZE_MESSAGE_TYPE, expanded, height: expanded ? undefined : measureBarHeight() },
+    '*',
+  );
+}
+
+// The bar acts as a drag handle: on mousedown we hand the drag to the parent
+// page, which can track the pointer across the whole viewport (the iframe only
+// receives events over its own, shrinking area).
+function wireDragHandle() {
+  const bar = document.querySelector('.bar');
+  if (!bar) {
+    return;
+  }
+
+  bar.addEventListener('mousedown', (event) => {
+    if (event.button !== 0 || event.target.closest('button, select, input, textarea, a')) {
+      return;
+    }
+    event.preventDefault();
+    window.parent.postMessage(
+      { type: DRAG_START_MESSAGE_TYPE, x: event.clientX, y: event.clientY },
+      '*',
+    );
+  });
 }
 
 function renderScenarioList() {
@@ -287,24 +345,33 @@ async function deleteSelectedScenario() {
   }
 }
 
-async function exportSelectedScenario() {
+function resolveExportBundle() {
+  if (elements.scenarioJson.value.trim()) {
+    return parseScenarioJson(elements.scenarioJson.value);
+  }
+
   const selected = controller.getSelectedScenario();
-  if (!selected) {
-    setFeedback('Pick a scenario to export first.', true);
+  return selected ? selected.bundle : null;
+}
+
+async function exportCurrentScenario() {
+  const bundle = resolveExportBundle();
+  if (!bundle || !(bundle.steps?.length > 0)) {
+    setFeedback('Nothing to export yet. Record or pick a scenario first.', true);
     return;
   }
 
-  const json = serializeScenario(selected.bundle);
+  const json = serializeScenario(bundle);
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
 
   try {
     await chrome.downloads.download({
       url,
-      filename: buildScenarioExportFilename(selected),
+      filename: buildScenarioExportFilename(bundle),
       saveAs: true,
     });
-    setFeedback(`Exported ${selected.name}`);
+    setFeedback(`Exported ${bundle.metadata?.name ?? 'scenario'}`);
   } finally {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -326,6 +393,10 @@ async function importScenarioFile(file) {
 function wireActions() {
   elements.dismissButton.addEventListener('click', () => {
     window.parent.postMessage({ type: TOGGLE_MESSAGE_TYPE }, '*');
+  });
+
+  elements.expandButton.addEventListener('click', () => {
+    setExpanded(elements.panel.dataset.expanded !== 'true');
   });
 
   document.querySelector('[data-action="start"]').addEventListener('click', () => {
@@ -395,7 +466,7 @@ function wireActions() {
 
   elements.exportButton.addEventListener('click', async () => {
     try {
-      await exportSelectedScenario();
+      await exportCurrentScenario();
     } catch (error) {
       setFeedback(error.message, true);
     }
@@ -448,20 +519,32 @@ function wireActions() {
     }
 
     if (message.type === 'take5:capture-state' && message.bundle) {
+      log('capture-state received; steps =', message.bundle.steps?.length);
       activeCaptureBundle = message.bundle;
       controller.setEditorValue(serializeScenario(message.bundle), { markDirty: false });
       renderScenarioJson();
       renderStats();
-      setMode('capturing');
-      setFeedback('Capture bundle loaded. Save it when you are ready.');
+      // Mode/feedback are owned by take5:status messages so a final capture-state
+      // after Stop does not flip the indicator back to "Capturing".
     }
   });
 }
 
 async function init() {
   wireActions();
+  wireDragHandle();
   setMode('idle');
   setFeedback('Ready.');
+  // Tighten the collapsed frame to the bar's real height once laid out.
+  requestAnimationFrame(() => {
+    const height = measureBarHeight();
+    if (height) {
+      window.parent.postMessage({ type: RESIZE_MESSAGE_TYPE, expanded: false, height }, '*');
+    }
+  });
+  // Ask the content script for any capture already in progress (e.g. resumed
+  // after a navigation) so the panel reflects it immediately.
+  window.parent.postMessage({ type: 'take5:request-state' }, '*');
   await refreshScenarios({
     preserveSelection: false,
     force: true,

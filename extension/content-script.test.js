@@ -10,28 +10,34 @@ function createNode() {
   };
 }
 
-test('toolbar visibility controller shows the panel and hides the launcher', () => {
+test('toolbar visibility controller shows the panel and reports it', () => {
   const frame = createNode();
-  const launcher = createNode();
   frame.style.display = 'none';
-  launcher.style.display = 'block';
+  const changes = [];
 
-  const controller = createToolbarVisibilityController({ frame, launcher });
+  const controller = createToolbarVisibilityController({
+    frame,
+    onChange: (visible) => changes.push(visible),
+  });
   controller.show();
 
   assert.equal(frame.style.display, 'block');
-  assert.equal(launcher.style.display, 'none');
+  assert.equal(controller.isVisible(), true);
+  assert.deepEqual(changes, [true]);
 });
 
-test('toolbar visibility controller hides the panel and shows the launcher', () => {
+test('toolbar visibility controller hides the panel and reports it', () => {
   const frame = createNode();
-  const launcher = createNode();
   frame.style.display = 'block';
-  launcher.style.display = 'none';
+  const changes = [];
 
-  const controller = createToolbarVisibilityController({ frame, launcher });
+  const controller = createToolbarVisibilityController({
+    frame,
+    onChange: (visible) => changes.push(visible),
+  });
   controller.hide();
 
   assert.equal(frame.style.display, 'none');
-  assert.equal(launcher.style.display, 'block');
+  assert.equal(controller.isVisible(), false);
+  assert.deepEqual(changes, [false]);
 });

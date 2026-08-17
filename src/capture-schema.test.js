@@ -30,6 +30,15 @@ test('validateCaptureBundle rejects unsupported step types', () => {
       }),
     /Unsupported step type: drag_and_pray/,
   );
+
+  assert.throws(
+    () =>
+      validateCaptureBundle({
+        ...validBundle,
+        steps: [{ type: 'fill', selector: '#prompt', value: 'Hello', typingDelayMs: -1 }],
+      }),
+    /typingDelayMs/,
+  );
 });
 
 test('validateCaptureBundle enforces the required top-level fields', () => {
@@ -100,9 +109,9 @@ test('validateCaptureBundle enforces the required top-level fields', () => {
     () =>
       validateCaptureBundle({
         ...validBundle,
-        metadata: { ...validBundle.metadata, schemaVersion: 2 },
+        metadata: { ...validBundle.metadata, schemaVersion: 3 },
       }),
-    /Unsupported capture bundle schemaVersion: 2/,
+    /Unsupported capture bundle schemaVersion: 3/,
   );
 
   assert.throws(
@@ -222,6 +231,52 @@ test('validateCaptureBundle validates per-step requirements', () => {
         steps: [{ type: 'assert_text', selector: '#status' }],
       }),
     /assert_text step requires ref or selector plus text/,
+  );
+});
+
+test('validateCaptureBundle accepts schema v2 timed pointer drags and rejects invalid trajectories', () => {
+  const v2Bundle = {
+    ...validBundle,
+    metadata: {
+      ...validBundle.metadata,
+      schemaVersion: 2,
+      viewport: { width: 1440, height: 900 },
+    },
+    steps: [
+      {
+        type: 'pointer_drag',
+        points: [
+          { x: 10, y: 20, t: 0 },
+          { x: 30, y: 40, t: 18 },
+        ],
+      },
+    ],
+  };
+  assert.deepEqual(validateCaptureBundle(v2Bundle), v2Bundle);
+
+  assert.throws(
+    () =>
+      validateCaptureBundle({
+        ...v2Bundle,
+        metadata: { ...v2Bundle.metadata, viewport: { width: 0, height: 900 } },
+      }),
+    /requires a positive viewport/,
+  );
+  assert.throws(
+    () =>
+      validateCaptureBundle({
+        ...v2Bundle,
+        steps: [
+          {
+            type: 'pointer_drag',
+            points: [
+              { x: 1, y: 2, t: 10 },
+              { x: 3, y: 4, t: 9 },
+            ],
+          },
+        ],
+      }),
+    /non-decreasing/,
   );
 });
 
