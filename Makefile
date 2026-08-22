@@ -45,10 +45,12 @@ version:
 # archives instead of requiring a full source clone to "Load unpacked" it. Excludes
 # private-key.pem (gitignored, never meant to leave this machine) and test/ (dev-only, not
 # part of the shipped extension).
+# Deliberately not dist/: GoReleaser runs this as a before hook and then refuses to start if
+# dist/ is non-empty, so the zip has to land somewhere it does not own.
 package-extension:
-	@mkdir -p dist
-	@rm -f dist/take5-extension.zip
-	cd extension && zip -r -q ../dist/take5-extension.zip . \
+	@mkdir -p build
+	@rm -f build/take5-extension.zip
+	cd extension && zip -r -q ../build/take5-extension.zip . \
 		-x "private-key.pem" -x "test/*" -x ".DS_Store"
 
 # thin wrappers around the built binary's own subcommands, for the manual test loop —

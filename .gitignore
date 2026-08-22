@@ -5,4 +5,5 @@ demo-output/
 .DS_Store
 /take5
 /dist/
+/build/
 extension/private-key.pem

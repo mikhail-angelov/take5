@@ -1,7 +1,7 @@
 name: build
 
-# No git remote is configured for this repo yet (see .goreleaser.yaml), so this workflow is
-# inert until one exists. Left in place so CI starts working the moment the repo is pushed.
+# Tag pushes deliberately do not run this: a `v*` tag points at a commit whose master push
+# was already checked here, and the tag triggers release.yml instead.
 on:
   push:
     branches: [master]

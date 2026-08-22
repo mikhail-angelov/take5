@@ -9,6 +9,11 @@ project_name: take5
 before:
   hooks:
     - go mod tidy
+    # Must be a before hook, not a workflow step: `release --clean` wipes dist/ as its very
+    # first action, so a zip written by an earlier step would have to survive that. The hook
+    # writes to build/ rather than dist/ because GoReleaser aborts on a non-empty dist/ right
+    # after the hooks run.
+    - make package-extension
 
 builds:
   - id: take5
@@ -53,11 +58,9 @@ changelog:
       - "^test:"
 
 # Wired up for .github/workflows/release.yml (tag push -> GoReleaser -> GitHub Release).
-# extra_files attaches the extension/ zip that workflow packages via `make package-extension`
-# alongside the cross-compiled binaries, so a release carries both halves of the product — see
-# README.md's Install section for why that split exists in the first place. Still a no-op
-# locally: like release.yml, this needs a git remote to publish to, which this repo does not
-# have yet.
+# extra_files attaches the extension zip built by the before hook above alongside the
+# cross-compiled binaries, so a release carries both halves of the product — see README.md's
+# Install section for why that split exists in the first place.
 release:
   extra_files:
-    - glob: ./dist/take5-extension.zip
+    - glob: ./build/take5-extension.zip
