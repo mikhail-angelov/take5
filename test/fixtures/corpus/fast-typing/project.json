@@ -1,0 +1,167 @@
+{
+  "version": 3,
+  "source": "raw.mp4",
+  "sessionId": "test-session",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "durationMs": 2200,
+  "sourceDurationMs": 2800,
+  "timeline": [
+    {
+      "sourceStartMs": 0,
+      "sourceEndMs": 800,
+      "speed": 1
+    },
+    {
+      "sourceStartMs": 800,
+      "sourceEndMs": 1600,
+      "speed": 4
+    },
+    {
+      "sourceStartMs": 1600,
+      "sourceEndMs": 2800,
+      "speed": 1
+    }
+  ],
+  "cursor": {
+    "start": {
+      "x": 420,
+      "y": 220
+    },
+    "moves": [
+      {
+        "startMs": 560,
+        "endMs": 740,
+        "from": {
+          "x": 420,
+          "y": 220
+        },
+        "to": {
+          "x": 520,
+          "y": 220
+        },
+        "ease": "cubic"
+      },
+      {
+        "startMs": 1160,
+        "endMs": 1340,
+        "from": {
+          "x": 520,
+          "y": 220
+        },
+        "to": {
+          "x": 700,
+          "y": 220
+        },
+        "ease": "cubic"
+      }
+    ],
+    "clicks": [
+      {
+        "tMs": 500,
+        "x": 420,
+        "y": 220
+      },
+      {
+        "tMs": 1400,
+        "x": 700,
+        "y": 220
+      }
+    ],
+    "holds": [],
+    "clickPulseMs": 420,
+    "sizePx": 22
+  },
+  "camera": [
+    {
+      "tMs": 0,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    },
+    {
+      "tMs": 80,
+      "zoom": 1.35,
+      "cx": 560,
+      "cy": 333.3333333333333
+    },
+    {
+      "tMs": 2100,
+      "zoom": 1.35,
+      "cx": 560,
+      "cy": 333.3333333333333
+    },
+    {
+      "tMs": 2520,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    }
+  ],
+  "annotations": [
+    {
+      "startMs": 500,
+      "endMs": 1250,
+      "kind": "label",
+      "text": "Search"
+    },
+    {
+      "startMs": 1400,
+      "endMs": 3000,
+      "kind": "label",
+      "text": "Submit"
+    }
+  ],
+  "audio": [
+    {
+      "kind": "click",
+      "tMs": 500
+    },
+    {
+      "kind": "input",
+      "tMs": 800
+    },
+    {
+      "kind": "input",
+      "tMs": 870
+    },
+    {
+      "kind": "input",
+      "tMs": 950
+    },
+    {
+      "kind": "click",
+      "tMs": 1400
+    }
+  ],
+  "voice": [],
+  "debug": {
+    "actionCount": 8,
+    "networkBusyIntervals": [],
+    "gaps": [
+      {
+        "startMs": 0,
+        "endMs": 500,
+        "reason": "head"
+      },
+      {
+        "startMs": 500,
+        "endMs": 800,
+        "reason": "natural"
+      },
+      {
+        "startMs": 1600,
+        "endMs": 2000,
+        "reason": "natural"
+      },
+      {
+        "startMs": 2000,
+        "endMs": 2800,
+        "reason": "tail"
+      }
+    ]
+  }
+}

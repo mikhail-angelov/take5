@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "sessionId": "test-session",
+  "startedAtEpochMs": 1786957200123,
+  "durationMs": 5000,
+  "url": "https://app.example.com/dashboard",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "capture": {},
+  "events": [
+    {
+      "t": 500,
+      "kind": "click",
+      "x": 200,
+      "y": 150,
+      "button": 0,
+      "target": {
+        "role": "link",
+        "rect": {
+          "x": 120,
+          "y": 120,
+          "width": 300,
+          "height": 60
+        },
+        "label": "Article"
+      }
+    },
+    {
+      "t": 1200,
+      "kind": "scroll",
+      "startMs": 1200,
+      "endMs": 2400,
+      "deltaY": 1800
+    },
+    {
+      "t": 3000,
+      "kind": "scroll",
+      "startMs": 3000,
+      "endMs": 3600,
+      "deltaY": -400
+    },
+    {
+      "t": 4200,
+      "kind": "click",
+      "x": 500,
+      "y": 700,
+      "button": 0,
+      "target": {
+        "role": "button",
+        "rect": {
+          "x": 440,
+          "y": 680,
+          "width": 160,
+          "height": 40
+        },
+        "label": "Comment"
+      }
+    }
+  ],
+  "network": []
+}

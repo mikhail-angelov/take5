@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "source": "raw.mp4",
+  "sessionId": "test-session",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "durationMs": 4000,
+  "sourceDurationMs": 4000,
+  "timeline": [
+    {
+      "sourceStartMs": 0,
+      "sourceEndMs": 4000,
+      "speed": 1
+    }
+  ],
+  "cursor": {
+    "start": {
+      "x": 300,
+      "y": 300
+    },
+    "moves": [
+      {
+        "startMs": 1000,
+        "endMs": 1400,
+        "from": {
+          "x": 300,
+          "y": 300
+        },
+        "to": {
+          "x": 500,
+          "y": 280
+        },
+        "ease": "linear"
+      },
+      {
+        "startMs": 1400,
+        "endMs": 1800,
+        "from": {
+          "x": 500,
+          "y": 280
+        },
+        "to": {
+          "x": 700,
+          "y": 260
+        },
+        "ease": "linear"
+      },
+      {
+        "startMs": 1800,
+        "endMs": 2200,
+        "from": {
+          "x": 700,
+          "y": 260
+        },
+        "to": {
+          "x": 900,
+          "y": 240
+        },
+        "ease": "linear"
+      }
+    ],
+    "clicks": [
+      {
+        "tMs": 500,
+        "x": 300,
+        "y": 300
+      },
+      {
+        "tMs": 3200,
+        "x": 900,
+        "y": 240
+      }
+    ],
+    "holds": [
+      {
+        "startMs": 1000,
+        "endMs": 2200
+      }
+    ]
+  },
+  "camera": [
+    {
+      "tMs": 0,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    },
+    {
+      "tMs": 80,
+      "zoom": 1.35,
+      "cx": 533.3333333333333,
+      "cy": 333.3333333333333
+    },
+    {
+      "tMs": 1200,
+      "zoom": 1.35,
+      "cx": 533.3333333333333,
+      "cy": 333.3333333333333
+    },
+    {
+      "tMs": 1620,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    },
+    {
+      "tMs": 2360,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    },
+    {
+      "tMs": 2780,
+      "zoom": 1.35,
+      "cx": 906.6666666666667,
+      "cy": 333.3333333333333
+    },
+    {
+      "tMs": 3900,
+      "zoom": 1.35,
+      "cx": 906.6666666666667,
+      "cy": 333.3333333333333
+    },
+    {
+      "tMs": 4320,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    }
+  ],
+  "annotations": [
+    {
+      "startMs": 500,
+      "endMs": 2100,
+      "kind": "label",
+      "text": "Card"
+    },
+    {
+      "startMs": 3200,
+      "endMs": 4800,
+      "kind": "label",
+      "text": "Confirm"
+    }
+  ],
+  "debug": {
+    "actionCount": 3,
+    "networkBusyIntervals": [],
+    "gaps": [
+      {
+        "startMs": 0,
+        "endMs": 500,
+        "reason": "head"
+      },
+      {
+        "startMs": 500,
+        "endMs": 1000,
+        "reason": "natural"
+      },
+      {
+        "startMs": 2200,
+        "endMs": 3200,
+        "reason": "natural"
+      },
+      {
+        "startMs": 3200,
+        "endMs": 4000,
+        "reason": "tail"
+      }
+    ]
+  }
+}

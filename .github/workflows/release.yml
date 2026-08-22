@@ -1,0 +1,42 @@
+name: release
+
+# Same situation as ci.yml: no git remote is configured for this repo yet, so this workflow is
+# inert until one exists. Left in place so a `git push` of a `v*` tag starts producing a
+# GitHub Release the moment the repo is pushed, with no further setup.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write   # goreleaser publishes the GitHub Release and uploads its assets
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0   # goreleaser's changelog needs full history, not the tag commit alone
+
+      - name: set up go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"   # keep in sync with go.mod
+
+      # Packages extension/ into the zip .goreleaser.yaml's release.extra_files attaches to
+      # the release, so "download a release" gets both halves of the product — the binary
+      # archives and the extension — from one page instead of only the binary.
+      - name: package extension
+        run: make package-extension
+
+      - name: run goreleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> 2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

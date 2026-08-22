@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "sessionId": "test-session",
+  "startedAtEpochMs": 1786957200123,
+  "durationMs": 5500,
+  "url": "https://app.example.com/dashboard",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "capture": {},
+  "events": [
+    {
+      "t": 500,
+      "kind": "click",
+      "x": 1216,
+      "y": 56,
+      "button": 0,
+      "target": {
+        "role": "button",
+        "rect": {
+          "x": 1200,
+          "y": 40,
+          "width": 32,
+          "height": 32
+        },
+        "label": "Settings"
+      }
+    },
+    {
+      "t": 1200,
+      "kind": "shortcut",
+      "key": "Meta+K"
+    },
+    {
+      "t": 2000,
+      "kind": "input",
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 400,
+          "y": 240,
+          "width": 300,
+          "height": 40
+        },
+        "label": "Search"
+      }
+    },
+    {
+      "t": 2300,
+      "kind": "input",
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 400,
+          "y": 240,
+          "width": 300,
+          "height": 40
+        },
+        "label": "Search"
+      }
+    },
+    {
+      "t": 3200,
+      "kind": "scroll",
+      "startMs": 3200,
+      "endMs": 3800,
+      "deltaY": 900
+    },
+    {
+      "t": 4500,
+      "kind": "click",
+      "x": 700,
+      "y": 450,
+      "button": 0,
+      "target": {
+        "role": "button",
+        "rect": {
+          "x": 200,
+          "y": 300,
+          "width": 900,
+          "height": 300
+        },
+        "label": "Generate"
+      }
+    }
+  ],
+  "network": []
+}

@@ -1,0 +1,31 @@
+[
+  {
+    "args": [
+      "-y",
+      "-i",
+      "raw.mp4",
+      "-filter_complex",
+      "[0:v]fps=30,setpts=PTS-STARTPTS[src];\n[src]trim=start=0.000000:end=5.000000,setpts=(PTS-STARTPTS)/1[out]",
+      "-map",
+      "[out]",
+      "-r",
+      "30",
+      "-fps_mode",
+      "cfr",
+      "-t",
+      "5.000",
+      "-an",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-crf",
+      "14",
+      "-pix_fmt",
+      "yuv420p",
+      "-f",
+      "mp4",
+      "000000.mp4"
+    ]
+  }
+]

@@ -1,0 +1,63 @@
+# GoReleaser config for take5 (docs/plans/go-port.md Phase 4). Builds only
+# cmd/take5 — cmd/spike-host is throwaway test scaffolding for test/spike/, never
+# shipped. FFmpeg is not bundled here: it stays an external dependency until the packaging
+# decision named in the plan's "what this plan does not do" is made separately.
+version: 2
+
+project_name: take5
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: take5
+    main: ./cmd/take5
+    binary: take5
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - windows
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    # Exactly the four targets docs/plans/go-port.md's Layout section names: darwin/arm64,
+    # darwin/amd64, windows/amd64, linux/amd64.
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: linux
+        goarch: arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+archives:
+  - id: take5
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+# Wired up for .github/workflows/release.yml (tag push -> GoReleaser -> GitHub Release).
+# extra_files attaches the extension/ zip that workflow packages via `make package-extension`
+# alongside the cross-compiled binaries, so a release carries both halves of the product — see
+# README.md's Install section for why that split exists in the first place. Still a no-op
+# locally: like release.yml, this needs a git remote to publish to, which this repo does not
+# have yet.
+release:
+  extra_files:
+    - glob: ./dist/take5-extension.zip

@@ -1,0 +1,7 @@
+key.json
+key.pem
+extensions/
+profile-*/
+*.log
+hosts/host-launcher.sh
+hosts/spike-host

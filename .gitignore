@@ -1,9 +1,8 @@
+node_modules/
+demo-output/
+.tmp/
+*.log
 .DS_Store
-.worktrees
-node_modules
-test*
-take5*
-.env
-*.mp3
-*.mp4
-review.md
+/take5
+/dist/
+extension/private-key.pem

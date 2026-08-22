@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "sessionId": "test-session",
+  "startedAtEpochMs": 1786957200123,
+  "durationMs": 6200,
+  "url": "https://app.example.com/dashboard",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "capture": {},
+  "events": [
+    {
+      "t": 800,
+      "kind": "click",
+      "x": 720,
+      "y": 60,
+      "button": 0,
+      "target": {
+        "role": "link",
+        "rect": {
+          "x": 200,
+          "y": 30,
+          "width": 900,
+          "height": 60
+        },
+        "label": "Dashboard"
+      }
+    },
+    {
+      "t": 5600,
+      "kind": "click",
+      "x": 400,
+      "y": 300,
+      "button": 0,
+      "target": {
+        "role": "button",
+        "rect": {
+          "x": 340,
+          "y": 260,
+          "width": 200,
+          "height": 80
+        },
+        "label": "Widget"
+      }
+    }
+  ],
+  "network": [
+    {
+      "id": "1",
+      "startMs": 850,
+      "endMs": 5200,
+      "type": "main_frame",
+      "status": 200,
+      "failed": false
+    }
+  ]
+}

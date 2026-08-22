@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "source": "raw.mp4",
+  "sessionId": "test-session",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "durationMs": 3100,
+  "sourceDurationMs": 5100,
+  "timeline": [
+    {
+      "sourceStartMs": 400,
+      "sourceEndMs": 1400,
+      "speed": 1
+    },
+    {
+      "sourceStartMs": 1400,
+      "sourceEndMs": 3900,
+      "speed": 5
+    },
+    {
+      "sourceStartMs": 3900,
+      "sourceEndMs": 5500,
+      "speed": 1
+    }
+  ],
+  "cursor": {
+    "start": {
+      "x": 670,
+      "y": 422
+    },
+    "moves": [
+      {
+        "startMs": 1860,
+        "endMs": 2040,
+        "from": {
+          "x": 670,
+          "y": 422
+        },
+        "to": {
+          "x": 700,
+          "y": 520
+        },
+        "ease": "cubic"
+      }
+    ],
+    "clicks": [
+      {
+        "tMs": 600,
+        "x": 670,
+        "y": 422
+      },
+      {
+        "tMs": 2100,
+        "x": 700,
+        "y": 520
+      }
+    ]
+  },
+  "camera": [
+    {
+      "tMs": 0,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    },
+    {
+      "tMs": 180,
+      "zoom": 1.35,
+      "cx": 730,
+      "cy": 466
+    },
+    {
+      "tMs": 2800,
+      "zoom": 1.35,
+      "cx": 730,
+      "cy": 466
+    },
+    {
+      "tMs": 3220,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    }
+  ],
+  "annotations": [
+    {
+      "startMs": 600,
+      "endMs": 1950,
+      "kind": "label",
+      "text": "Generate"
+    },
+    {
+      "startMs": 2100,
+      "endMs": 3700,
+      "kind": "label",
+      "text": "Result"
+    }
+  ],
+  "debug": {
+    "actionCount": 2,
+    "networkBusyIntervals": [
+      {
+        "startMs": 1050,
+        "endMs": 4200
+      }
+    ],
+    "gaps": [
+      {
+        "startMs": 0,
+        "endMs": 1000,
+        "reason": "head-trim"
+      },
+      {
+        "startMs": 1000,
+        "endMs": 4500,
+        "reason": "network-wait"
+      },
+      {
+        "startMs": 4500,
+        "endMs": 5500,
+        "reason": "tail"
+      }
+    ]
+  }
+}

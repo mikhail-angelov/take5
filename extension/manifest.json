@@ -2,31 +2,53 @@
   "manifest_version": 3,
   "name": "Take5",
   "version": "0.1.0",
-  "description": "Capture and manage product walkthrough scenarios locally.",
-  "permissions": ["storage", "activeTab", "scripting", "downloads"],
+  "description": "Records the current tab plus interaction telemetry, and hands it to the local take5 helper for automatic post-production.",
+  "minimum_chrome_version": "116",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgiSMOLc01PkujpYWsPmIPlb63JLIBE/kSD1yPa/arKYVTQLqcBFoUiAQBDiMgX1UEN1OmAFZ7PUlZsFmemp7CWzg0QvQ+PWv9dO2kSkIcb3OAMPECDKqtosJklFJuYNWOeI9mXmpA1Y2yVOQdFXl9wqFBBhs5Fc2W1+/kQ+RJJ/+5Z5a1cPJZKE/ub4PualPg+yXauLEG9ykChSEbUYD1pEcm87FlMlvbyZllIyUbPGeJ0WDg9sQTlyW3xBPgCM2ahyekD63LTocfHeRDwcd3agTakRMWUzWcESe0cx8YjbuMsgAAWaXh3AGSi2+Tx+yQmpA1oUaXOOeyv8PLkVMwwIDAQAB",
+  "permissions": [
+    "debugger",
+    "nativeMessaging",
+    "activeTab",
+    "webNavigation",
+    "webRequest",
+    "storage",
+    "notifications"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "background": {
     "service_worker": "service-worker.js",
     "type": "module"
   },
-  "action": {},
+  "action": {
+    "default_title": "Take5",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content-script.js"],
-      "run_at": "document_idle"
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "toolbar.html",
-        "annotation-overlay.js",
-        "capture-engine.js",
-        "capture-schema.js",
-        "replay-engine.js",
-        "plan-generator.js"
+      "matches": [
+        "<all_urls>"
       ],
-      "matches": ["<all_urls>"]
+      "js": [
+        "lib/target-metadata.js",
+        "lib/event-capture.js",
+        "content-script.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
     }
   ]
 }

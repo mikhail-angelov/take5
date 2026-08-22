@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Take5</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Take5</h1>
+      <span id="phase" class="phase"></span>
+    </header>
+
+    <p id="detail" class="detail"></p>
+
+    <label class="voice-toggle">
+      <input id="voice-enabled" type="checkbox" />
+      <span>Record voice narration</span>
+      <span id="voice-level" class="voice-level" aria-hidden="true"></span>
+    </label>
+    <p id="voice-status" class="voice-status"></p>
+    <p class="voice-disclosure">
+      Off by default. When on, your microphone is recorded and transcribed locally, then the
+      transcript <strong>text</strong> (never the raw audio) is sent to a cloud LLM for
+      cleanup. The LLM's rewritten text is then sent to a cloud text-to-speech service to
+      produce narration.
+    </p>
+
+    <button id="toggle" class="primary" type="button"></button>
+    <button id="open-history" type="button">Recording history</button>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

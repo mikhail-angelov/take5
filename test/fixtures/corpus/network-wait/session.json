@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "sessionId": "test-session",
+  "startedAtEpochMs": 1786957200123,
+  "durationMs": 5500,
+  "url": "https://app.example.com/dashboard",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "capture": {},
+  "events": [
+    {
+      "t": 1000,
+      "kind": "click",
+      "x": 670,
+      "y": 422,
+      "button": 0,
+      "target": {
+        "role": "button",
+        "rect": {
+          "x": 600,
+          "y": 400,
+          "width": 140,
+          "height": 44
+        },
+        "label": "Generate"
+      }
+    },
+    {
+      "t": 4500,
+      "kind": "click",
+      "x": 700,
+      "y": 520,
+      "button": 0,
+      "target": {
+        "role": "link",
+        "rect": {
+          "x": 640,
+          "y": 500,
+          "width": 220,
+          "height": 32
+        },
+        "label": "Result"
+      }
+    }
+  ],
+  "network": [
+    {
+      "id": "1",
+      "startMs": 1050,
+      "endMs": 4200,
+      "type": "xmlhttprequest",
+      "status": 200,
+      "failed": false
+    }
+  ]
+}

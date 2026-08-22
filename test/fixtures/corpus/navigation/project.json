@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "source": "raw.mp4",
+  "sessionId": "test-session",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "durationMs": 2700,
+  "sourceDurationMs": 6000,
+  "timeline": [
+    {
+      "sourceStartMs": 200,
+      "sourceEndMs": 1200,
+      "speed": 1
+    },
+    {
+      "sourceStartMs": 1200,
+      "sourceEndMs": 5000,
+      "speed": 7.6
+    },
+    {
+      "sourceStartMs": 5000,
+      "sourceEndMs": 6200,
+      "speed": 1
+    }
+  ],
+  "cursor": {
+    "start": {
+      "x": 720,
+      "y": 60
+    },
+    "moves": [
+      {
+        "startMs": 1858.1818181818182,
+        "endMs": 2040,
+        "from": {
+          "x": 720,
+          "y": 60
+        },
+        "to": {
+          "x": 400,
+          "y": 300
+        },
+        "ease": "cubic"
+      }
+    ],
+    "clicks": [
+      {
+        "tMs": 600,
+        "x": 720,
+        "y": 60
+      },
+      {
+        "tMs": 2100,
+        "x": 400,
+        "y": 300
+      }
+    ]
+  },
+  "camera": [
+    {
+      "tMs": 1260,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    },
+    {
+      "tMs": 1680,
+      "zoom": 1.25,
+      "cx": 576,
+      "cy": 360
+    },
+    {
+      "tMs": 2800,
+      "zoom": 1.25,
+      "cx": 576,
+      "cy": 360
+    },
+    {
+      "tMs": 3220,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    }
+  ],
+  "annotations": [
+    {
+      "startMs": 2100,
+      "endMs": 3700,
+      "kind": "label",
+      "text": "Widget"
+    }
+  ],
+  "debug": {
+    "actionCount": 2,
+    "networkBusyIntervals": [
+      {
+        "startMs": 850,
+        "endMs": 5200
+      }
+    ],
+    "gaps": [
+      {
+        "startMs": 0,
+        "endMs": 800,
+        "reason": "head-trim"
+      },
+      {
+        "startMs": 800,
+        "endMs": 5600,
+        "reason": "network-wait"
+      },
+      {
+        "startMs": 5600,
+        "endMs": 6200,
+        "reason": "tail"
+      }
+    ]
+  }
+}

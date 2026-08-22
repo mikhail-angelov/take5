@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Take5 acceptance app</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0e1116;
+        --panel: #161b22;
+        --line: #262d36;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --accent: #2f81f7;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 28px;
+        border-bottom: 1px solid var(--line);
+      }
+      h1 { font-size: 16px; margin: 0; }
+      main { max-width: 860px; margin: 0 auto; padding: 32px 28px 96px; }
+      section { margin-bottom: 40px; }
+      h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+      label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 13px; }
+      input[type="text"] {
+        width: 340px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--text);
+        font: inherit;
+      }
+      button {
+        padding: 10px 18px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        background: var(--accent);
+        color: white;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.secondary { background: var(--panel); border-color: var(--line); color: var(--text); }
+      button.icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-grid;
+        place-items: center;
+        background: var(--panel);
+        border-color: var(--line);
+      }
+      .row { display: flex; align-items: center; gap: 12px; }
+      .result {
+        margin-top: 20px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        min-height: 72px;
+        color: var(--muted);
+      }
+      .result.ready { color: var(--text); border-color: #2ea043; }
+      .filler p { color: var(--muted); }
+      a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Acceptance App</h1>
+      <div class="row">
+        <button class="icon" id="settings" aria-label="Settings">⚙</button>
+        <a href="/page2.html" id="next">Second page</a>
+      </div>
+    </header>
+
+    <main>
+      <section>
+        <h2>Create</h2>
+        <label for="project">Project name</label>
+        <input type="text" id="project" placeholder="my-project" />
+        <div class="row" style="margin-top: 16px">
+          <button id="generate">Generate</button>
+          <button class="secondary" id="reset">Reset</button>
+        </div>
+        <div class="result" id="result">No result yet.</div>
+      </section>
+
+      <section class="filler">
+        <h2>Scrolling content</h2>
+        <div id="filler"></div>
+      </section>
+    </main>
+
+    <script>
+      const result = document.getElementById("result");
+
+      document.getElementById("generate").addEventListener("click", async () => {
+        result.className = "result";
+        result.textContent = "Working…";
+        // A real request, so chrome.webRequest can observe its timing.
+        const response = await fetch("/api/generate?ms=5000");
+        const data = await response.json();
+        result.className = "result ready";
+        result.textContent = `Generated ${data.id} for "${
+          document.getElementById("project").value || "untitled"
+        }".`;
+      });
+
+      document.getElementById("reset").addEventListener("click", () => {
+        result.className = "result";
+        result.textContent = "No result yet.";
+      });
+
+      // Enough content to make scroll gestures worth recording.
+      const filler = document.getElementById("filler");
+      for (let i = 1; i <= 30; i += 1) {
+        const p = document.createElement("p");
+        p.textContent = `Paragraph ${i}. Scroll through this to exercise scroll-gesture aggregation.`;
+        filler.append(p);
+      }
+    </script>
+  </body>
+</html>

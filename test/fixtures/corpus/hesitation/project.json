@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "source": "raw.mp4",
+  "sessionId": "test-session",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "durationMs": 2350,
+  "sourceDurationMs": 2350,
+  "timeline": [
+    {
+      "sourceStartMs": 400,
+      "sourceEndMs": 1500,
+      "speed": 1
+    },
+    {
+      "sourceStartMs": 3250,
+      "sourceEndMs": 4500,
+      "speed": 1
+    }
+  ],
+  "cursor": {
+    "start": {
+      "x": 300,
+      "y": 300
+    },
+    "moves": [
+      {
+        "startMs": 1110,
+        "endMs": 1290,
+        "from": {
+          "x": 300,
+          "y": 300
+        },
+        "to": {
+          "x": 300,
+          "y": 400
+        },
+        "ease": "cubic"
+      }
+    ],
+    "clicks": [
+      {
+        "tMs": 600,
+        "x": 300,
+        "y": 300
+      },
+      {
+        "tMs": 1350,
+        "x": 300,
+        "y": 400
+      }
+    ]
+  },
+  "camera": [
+    {
+      "tMs": 0,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    },
+    {
+      "tMs": 180,
+      "zoom": 1.35,
+      "cx": 533.3333333333333,
+      "cy": 345
+    },
+    {
+      "tMs": 2050,
+      "zoom": 1.35,
+      "cx": 533.3333333333333,
+      "cy": 345
+    },
+    {
+      "tMs": 2470,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    }
+  ],
+  "annotations": [
+    {
+      "startMs": 600,
+      "endMs": 1200,
+      "kind": "label",
+      "text": "Menu"
+    },
+    {
+      "startMs": 1350,
+      "endMs": 2950,
+      "kind": "label",
+      "text": "Settings"
+    }
+  ],
+  "debug": {
+    "actionCount": 2,
+    "networkBusyIntervals": [],
+    "gaps": [
+      {
+        "startMs": 0,
+        "endMs": 1000,
+        "reason": "head-trim"
+      },
+      {
+        "startMs": 1000,
+        "endMs": 3500,
+        "reason": "hesitation"
+      },
+      {
+        "startMs": 3500,
+        "endMs": 4500,
+        "reason": "tail"
+      }
+    ]
+  }
+}

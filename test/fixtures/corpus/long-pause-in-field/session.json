@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "sessionId": "test-session",
+  "startedAtEpochMs": 1786957200123,
+  "durationMs": 5000,
+  "url": "https://app.example.com/dashboard",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "capture": {},
+  "events": [
+    {
+      "t": 500,
+      "kind": "click",
+      "x": 420,
+      "y": 300,
+      "button": 0,
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 300,
+          "y": 260,
+          "width": 500,
+          "height": 120
+        },
+        "label": "Message"
+      }
+    },
+    {
+      "t": 800,
+      "kind": "input",
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 300,
+          "y": 260,
+          "width": 500,
+          "height": 120
+        },
+        "label": "Message"
+      }
+    },
+    {
+      "t": 1000,
+      "kind": "input",
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 300,
+          "y": 260,
+          "width": 500,
+          "height": 120
+        },
+        "label": "Message"
+      }
+    },
+    {
+      "t": 3500,
+      "kind": "input",
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 300,
+          "y": 260,
+          "width": 500,
+          "height": 120
+        },
+        "label": "Message"
+      }
+    },
+    {
+      "t": 3700,
+      "kind": "input",
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 300,
+          "y": 260,
+          "width": 500,
+          "height": 120
+        },
+        "label": "Message"
+      }
+    },
+    {
+      "t": 4200,
+      "kind": "click",
+      "x": 760,
+      "y": 400,
+      "button": 0,
+      "target": {
+        "role": "button",
+        "rect": {
+          "x": 720,
+          "y": 380,
+          "width": 100,
+          "height": 40
+        },
+        "label": "Send"
+      }
+    }
+  ],
+  "network": []
+}

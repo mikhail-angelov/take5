@@ -1,44 +1,16 @@
 {
-  "name": "@mikhail.angelov/take5",
-  "version": "1.0.0",
-  "author": "Mikhail Angelov",
-  "repository": {
-    "url": "https://github.com/mikhail-angelov/take5"
-  },
-  "description": "Extension-first CLI for replaying captured web app flows",
+  "name": "take5",
+  "version": "2.0.0",
+  "private": true,
   "type": "module",
-  "bin": {
-    "take5": "./src/cli.js"
-  },
-  "files": [
-    "src/",
-    "extension/",
-    "fixtures/",
-    "scripts/",
-    "README.md"
-  ],
-  "scripts": {
-    "start": "node src/cli.js run fixtures/sample-capture.json",
-    "dev": "node src/cli.js run fixtures/sample-capture.json --cut-delays",
-    "smoke": "node scripts/smoke-run.js",
-    "test": "node --test",
-    "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "t":" node src/cli.js run ~/Downloads/take5-capture-2026-08-04T17-38-51-048Z-97c958.json --out ./take5-output --render --cut-delays"
-  },
+  "description": "Node-only dev tooling for take5: the extension icons, the manual acceptance app, the SPIKE.md re-verification harness, and the fixture corpus generator. The product itself is the Go module at the repo root — see cmd/take5.",
   "engines": {
-    "node": ">=20.6.0"
+    "node": ">=20"
   },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "eslint": "^10.8.0",
-    "eslint-config-prettier": "^10.1.8",
-    "globals": "^17.8.0",
-    "prettier": "^3.9.6"
-  },
-  "dependencies": {
-    "playwright": "^1.62.1",
-    "playwright-recast": "^0.19.2"
+  "scripts": {
+    "fixture": "node test/fixtures/serve.js",
+    "spike": "node test/spike/run.mjs",
+    "icons": "node tools/make-icons.mjs",
+    "fixtures:gen": "node tools/gen-fixtures.mjs"
   }
 }

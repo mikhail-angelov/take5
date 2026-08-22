@@ -1,0 +1,98 @@
+body {
+  margin: 0;
+  padding: 24px;
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #1f2328;
+  max-width: 720px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+button {
+  padding: 6px 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #f6f8fa;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #eef0f2;
+}
+
+.list {
+  color: #57606a;
+}
+
+.session {
+  border: 1px solid #e5e9ee;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.session-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.url {
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.session-meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #57606a;
+  word-break: break-all;
+}
+
+.status {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.status-ready {
+  background: #dafbe1;
+  color: #1a7f37;
+}
+
+.status-processing {
+  background: #fff3d6;
+  color: #8a6400;
+}
+
+.status-render_failed,
+.status-recording_failed {
+  background: #ffe6e6;
+  color: #c0392b;
+}
+
+.reason {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #c0392b;
+  word-break: break-word;
+}
+
+.error {
+  color: #c0392b;
+}

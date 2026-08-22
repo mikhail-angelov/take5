@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "sessionId": "test-session",
+  "startedAtEpochMs": 1786957200123,
+  "durationMs": 4500,
+  "url": "https://app.example.com/dashboard",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "capture": {},
+  "events": [
+    {
+      "t": 1000,
+      "kind": "click",
+      "x": 300,
+      "y": 300,
+      "button": 0,
+      "target": {
+        "role": "button",
+        "rect": {
+          "x": 260,
+          "y": 280,
+          "width": 100,
+          "height": 40
+        },
+        "label": "Menu"
+      }
+    },
+    {
+      "t": 3500,
+      "kind": "click",
+      "x": 300,
+      "y": 400,
+      "button": 0,
+      "target": {
+        "role": "menuitem",
+        "rect": {
+          "x": 260,
+          "y": 380,
+          "width": 120,
+          "height": 30
+        },
+        "label": "Settings"
+      }
+    }
+  ],
+  "network": []
+}

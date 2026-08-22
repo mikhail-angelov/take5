@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "sessionId": "test-session",
+  "startedAtEpochMs": 1786957200123,
+  "durationMs": 2800,
+  "url": "https://app.example.com/dashboard",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "capture": {},
+  "events": [
+    {
+      "t": 500,
+      "kind": "click",
+      "x": 420,
+      "y": 220,
+      "button": 0,
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 360,
+          "y": 200,
+          "width": 320,
+          "height": 40
+        },
+        "label": "Search"
+      }
+    },
+    {
+      "t": 800,
+      "kind": "input",
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 360,
+          "y": 200,
+          "width": 320,
+          "height": 40
+        },
+        "label": "Search"
+      }
+    },
+    {
+      "t": 950,
+      "kind": "input",
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 360,
+          "y": 200,
+          "width": 320,
+          "height": 40
+        },
+        "label": "Search"
+      }
+    },
+    {
+      "t": 1080,
+      "kind": "input",
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 360,
+          "y": 200,
+          "width": 320,
+          "height": 40
+        },
+        "label": "Search"
+      }
+    },
+    {
+      "t": 1230,
+      "kind": "input",
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 360,
+          "y": 200,
+          "width": 320,
+          "height": 40
+        },
+        "label": "Search"
+      }
+    },
+    {
+      "t": 1400,
+      "kind": "input",
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 360,
+          "y": 200,
+          "width": 320,
+          "height": 40
+        },
+        "label": "Search"
+      }
+    },
+    {
+      "t": 1600,
+      "kind": "input",
+      "target": {
+        "role": "textbox",
+        "rect": {
+          "x": 360,
+          "y": 200,
+          "width": 320,
+          "height": 40
+        },
+        "label": "Search"
+      }
+    },
+    {
+      "t": 2000,
+      "kind": "click",
+      "x": 700,
+      "y": 220,
+      "button": 0,
+      "target": {
+        "role": "button",
+        "rect": {
+          "x": 660,
+          "y": 200,
+          "width": 100,
+          "height": 40
+        },
+        "label": "Submit"
+      }
+    }
+  ],
+  "network": []
+}

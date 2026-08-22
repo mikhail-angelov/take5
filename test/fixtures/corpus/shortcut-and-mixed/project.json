@@ -1,0 +1,191 @@
+{
+  "version": 3,
+  "source": "raw.mp4",
+  "sessionId": "test-session",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "durationMs": 5275,
+  "sourceDurationMs": 5500,
+  "timeline": [
+    {
+      "sourceStartMs": 0,
+      "sourceEndMs": 2000,
+      "speed": 1
+    },
+    {
+      "sourceStartMs": 2000,
+      "sourceEndMs": 2300,
+      "speed": 4
+    },
+    {
+      "sourceStartMs": 2300,
+      "sourceEndMs": 5500,
+      "speed": 1
+    }
+  ],
+  "cursor": {
+    "start": {
+      "x": 1216,
+      "y": 56
+    },
+    "moves": [
+      {
+        "startMs": 1623.389594674574,
+        "endMs": 1940,
+        "from": {
+          "x": 1216,
+          "y": 56
+        },
+        "to": {
+          "x": 550,
+          "y": 260
+        },
+        "ease": "cubic"
+      },
+      {
+        "startMs": 4035,
+        "endMs": 4215,
+        "from": {
+          "x": 550,
+          "y": 260
+        },
+        "to": {
+          "x": 700,
+          "y": 450
+        },
+        "ease": "cubic"
+      }
+    ],
+    "clicks": [
+      {
+        "tMs": 500,
+        "x": 1216,
+        "y": 56
+      },
+      {
+        "tMs": 4275,
+        "x": 700,
+        "y": 450
+      }
+    ],
+    "holds": [],
+    "clickPulseMs": 420,
+    "sizePx": 22
+  },
+  "camera": [
+    {
+      "tMs": 0,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    },
+    {
+      "tMs": 80,
+      "zoom": 1.35,
+      "cx": 906.6666666666667,
+      "cy": 333.3333333333333
+    },
+    {
+      "tMs": 1200,
+      "zoom": 1.35,
+      "cx": 906.6666666666667,
+      "cy": 333.3333333333333
+    },
+    {
+      "tMs": 1580,
+      "zoom": 1.25,
+      "cx": 576,
+      "cy": 360
+    },
+    {
+      "tMs": 2775,
+      "zoom": 1.25,
+      "cx": 576,
+      "cy": 360
+    },
+    {
+      "tMs": 3195,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    }
+  ],
+  "annotations": [
+    {
+      "startMs": 500,
+      "endMs": 1050,
+      "kind": "label",
+      "text": "Settings"
+    },
+    {
+      "startMs": 1200,
+      "endMs": 1850,
+      "kind": "shortcut",
+      "text": "Meta+K"
+    },
+    {
+      "startMs": 2000,
+      "endMs": 3675,
+      "kind": "label",
+      "text": "Search"
+    }
+  ],
+  "audio": [
+    {
+      "kind": "click",
+      "tMs": 500
+    },
+    {
+      "kind": "input",
+      "tMs": 2000
+    },
+    {
+      "kind": "input",
+      "tMs": 2075
+    },
+    {
+      "kind": "click",
+      "tMs": 4275
+    }
+  ],
+  "voice": [],
+  "debug": {
+    "actionCount": 6,
+    "networkBusyIntervals": [],
+    "gaps": [
+      {
+        "startMs": 0,
+        "endMs": 500,
+        "reason": "head"
+      },
+      {
+        "startMs": 500,
+        "endMs": 1200,
+        "reason": "natural"
+      },
+      {
+        "startMs": 1200,
+        "endMs": 2000,
+        "reason": "natural"
+      },
+      {
+        "startMs": 2300,
+        "endMs": 3200,
+        "reason": "natural"
+      },
+      {
+        "startMs": 3800,
+        "endMs": 4500,
+        "reason": "natural"
+      },
+      {
+        "startMs": 4500,
+        "endMs": 5500,
+        "reason": "tail"
+      }
+    ]
+  }
+}

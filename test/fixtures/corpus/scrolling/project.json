@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "source": "raw.mp4",
+  "sessionId": "test-session",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "devicePixelRatio": 2
+  },
+  "durationMs": 5000,
+  "sourceDurationMs": 5000,
+  "timeline": [
+    {
+      "sourceStartMs": 0,
+      "sourceEndMs": 5000,
+      "speed": 1
+    }
+  ],
+  "cursor": {
+    "start": {
+      "x": 200,
+      "y": 150
+    },
+    "moves": [
+      {
+        "startMs": 3855.228088951326,
+        "endMs": 4140,
+        "from": {
+          "x": 200,
+          "y": 150
+        },
+        "to": {
+          "x": 500,
+          "y": 700
+        },
+        "ease": "cubic"
+      }
+    ],
+    "clicks": [
+      {
+        "tMs": 500,
+        "x": 200,
+        "y": 150
+      },
+      {
+        "tMs": 4200,
+        "x": 500,
+        "y": 700
+      }
+    ]
+  },
+  "camera": [
+    {
+      "tMs": 0,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    },
+    {
+      "tMs": 80,
+      "zoom": 1.25,
+      "cx": 576,
+      "cy": 360
+    },
+    {
+      "tMs": 1200,
+      "zoom": 1.25,
+      "cx": 576,
+      "cy": 360
+    },
+    {
+      "tMs": 1620,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    },
+    {
+      "tMs": 3360,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    },
+    {
+      "tMs": 3780,
+      "zoom": 1.35,
+      "cx": 533.3333333333333,
+      "cy": 566.6666666666667
+    },
+    {
+      "tMs": 4900,
+      "zoom": 1.35,
+      "cx": 533.3333333333333,
+      "cy": 566.6666666666667
+    },
+    {
+      "tMs": 5320,
+      "zoom": 1,
+      "cx": 720,
+      "cy": 450
+    }
+  ],
+  "annotations": [
+    {
+      "startMs": 500,
+      "endMs": 2100,
+      "kind": "label",
+      "text": "Article"
+    },
+    {
+      "startMs": 4200,
+      "endMs": 5800,
+      "kind": "label",
+      "text": "Comment"
+    }
+  ],
+  "debug": {
+    "actionCount": 4,
+    "networkBusyIntervals": [],
+    "gaps": [
+      {
+        "startMs": 0,
+        "endMs": 500,
+        "reason": "head"
+      },
+      {
+        "startMs": 500,
+        "endMs": 1200,
+        "reason": "natural"
+      },
+      {
+        "startMs": 2400,
+        "endMs": 3000,
+        "reason": "natural"
+      },
+      {
+        "startMs": 3600,
+        "endMs": 4200,
+        "reason": "natural"
+      },
+      {
+        "startMs": 4200,
+        "endMs": 5000,
+        "reason": "tail"
+      }
+    ]
+  }
+}
